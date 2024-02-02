@@ -27,6 +27,8 @@ set(YAML_CPP_DIR ${THIRD_PARTY_BUILD_ROOT_DIR}/yaml-cpp)
 message(STATUS "YAML_CPP_DIR: ${YAML_CPP_DIR}")
 set(SPDLOG_DIR ${THIRD_PARTY_BUILD_ROOT_DIR}/spdlog)
 message(STATUS "SPDLOG_DIR: ${SPDLOG_DIR}")
+set(WCDB_DIR ${THIRD_PARTY_BUILD_ROOT_DIR}/wcdb)
+message(STATUS "WCDB_DIR: ${WCDB_DIR}")
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/download_file.cmake)
 download_and_extract(

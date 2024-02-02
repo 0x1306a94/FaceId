@@ -23,7 +23,8 @@ class Storage {
     ~Storage();
 
   private:
-    std::unique_ptr<AppFile> m_app_file;
+    class Implement;
+    std::unique_ptr<Implement> m_impl;
 };
 }  // namespace storage
 }  // namespace face
