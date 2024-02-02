@@ -1,0 +1,12 @@
+diff --git a/include/orz/mem/pot.h b/include/orz/mem/pot.h
+index 4b08c97..0c29355 100644
+--- a/include/orz/mem/pot.h
++++ b/include/orz/mem/pot.h
+@@ -5,6 +5,7 @@
+ #ifndef ORZ_MEM_POT_H
+ #define ORZ_MEM_POT_H
+ 
++#include <functional>
+ #include <mutex>
+ #include <memory>
+ 

@@ -1,0 +1,10 @@
+Package: seeta-face-feature-server
+Version: ${Version}
+Section: utils
+Priority: optional
+Architecture: amd64
+Installed-Size: ${Installed-Size}
+Maintainer: sunsong<sunsong@taih.com>
+Provides: taihe
+Description: 人脸特征服务
+Essential: no

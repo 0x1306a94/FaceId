@@ -1,0 +1,52 @@
+#!/bin/sh -e
+
+case "$1" in
+purge)
+  #
+  ;;
+
+remove)
+
+  if [ -L /etc/ld.so.conf.d/seeta-face-feature-server.conf ]; then
+    rm -rf /etc/ld.so.conf.d/seeta-face-feature-server.conf
+    echo "Removed /etc/ld.so.conf.d/seeta-face-feature-server.conf"
+    ldconfig
+  fi
+
+  if [ -L /lib/systemd/system/seeta_face_feature_server.service ]; then
+    service seeta_face_feature_server stop
+    systemctl disable seeta_face_feature_server
+    rm -rf /lib/systemd/system/seeta_face_feature_server.service
+  fi
+
+  if [ -L /usr/local/bin/seeta_face_feature_server ]; then
+    rm -rf /usr/local/bin/seeta_face_feature_server
+    echo "Removed /usr/local/bin/seeta_face_feature_server"
+  fi
+  
+  if [ -L /usr/local/bin/seeta_face_feature_database_cli ]; then
+    rm -rf /usr/local/bin/seeta_face_feature_database_cli
+    echo "Removed /usr/local/bin/seeta_face_feature_database_cli"
+  fi
+
+  if [ -d /etc/seeta_face_feature_server ]; then
+    rm -rf /etc/seeta_face_feature_server
+    echo "Removed /etc/seeta_face_feature_server"
+  fi
+
+  echo "Removed /opt/seeta_face_feature_server"
+  ;;
+
+upgrade | deconfigure)
+  #
+  ;;
+
+abort-upgrade | failed-upgrade)
+  #
+  ;;
+
+*)
+  echo "unknown argument --> $1" >&2
+  exit 0
+  ;;
+esac

@@ -1,0 +1,40 @@
+cmake_minimum_required(VERSION 3.16)
+project(face_id)
+
+set(CMAKE_CXX_STANDARD 17)
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+endif()
+
+message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/install CACHE PATH "Force path to set CMAKE_INSTALL_PREFIX" FORCE)
+endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+
+message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
+message(STATUS "CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
+
+set(THIRD_PARTY_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/third_party)
+set(THIRD_PARTY_BUILD_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/build_3rdparty)
+set(SEETA_FACE_DIR ${THIRD_PARTY_BUILD_ROOT_DIR}/SeetaFace6Open)
+message(STATUS "SEETA_FACE_DIR: ${SEETA_FACE_DIR}")
+set(LIBHV_DIR ${THIRD_PARTY_BUILD_ROOT_DIR}/libhv)
+message(STATUS "LIBHV_DIR: ${LIBHV_DIR}")
+set(YAML_CPP_DIR ${THIRD_PARTY_BUILD_ROOT_DIR}/yaml-cpp)
+message(STATUS "YAML_CPP_DIR: ${YAML_CPP_DIR}")
+set(SPDLOG_DIR ${THIRD_PARTY_BUILD_ROOT_DIR}/spdlog)
+message(STATUS "SPDLOG_DIR: ${SPDLOG_DIR}")
+
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/download_file.cmake)
+download_and_extract(
+    URL https://github.com/0x1306a94/FaceId/releases/download/sf3.0_models/sf3.0_models.zip
+    FILENAME ${CMAKE_CURRENT_LIST_DIR}/download_deps/sf3.0_models.zip
+    HASH_TYPE SHA256
+    HASH 5f1ea065ac10d19d59b75e3c0fa06feaca72f5048b6bfbdfc886f837bd49342e
+    EXTRACT_DIR ${CMAKE_CURRENT_LIST_DIR}/sf3.0_models
+)
+
+add_subdirectory(modules)

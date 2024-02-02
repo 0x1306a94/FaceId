@@ -1,0 +1,40 @@
+#!/bin/sh -e
+
+set -e
+
+# ref: postinst in sudo package
+
+case "$1" in
+configure)
+
+  echo "Installed /opt/seeta_face_feature_server"
+  if [ ! -L /etc/ld.so.conf.d/seeta-face-feature-server.conf ]; then
+    ln -s /opt/seeta_face_feature_server/config/seeta-face-feature-server.conf /etc/ld.so.conf.d/seeta-face-feature-server.conf
+    echo "Installed /etc/ld.so.conf.d/seeta-face-feature-server.conf"
+    ldconfig
+  fi
+
+  if [ ! -L /lib/systemd/system/seeta_face_feature_server.service ]; then
+    ln -s /opt/seeta_face_feature_server/service/seeta_face_feature_server.service /lib/systemd/system/seeta_face_feature_server.service
+    systemctl enable seeta_face_feature_server
+  fi
+
+  if [ ! -L /usr/local/bin/seeta_face_feature_server ]; then
+    ln -s /opt/seeta_face_feature_server/bin/seeta_face_feature_server /usr/local/bin/
+    echo "Installed /usr/local/bin/seeta_face_feature_server"
+  fi
+
+  if [ ! -L /usr/local/bin/seeta_face_feature_database_cli ]; then
+    ln -s /opt/seeta_face_feature_server/bin/seeta_face_feature_database_cli /usr/local/bin/
+    echo "Installed /usr/local/bin/seeta_face_feature_database_cli"
+  fi
+
+  if [ ! -d /etc/seeta_face_feature_server/config ]; then
+    mkdir -p /etc/seeta_face_feature_server/config
+    cp /opt/seeta_face_feature_server/config/config.yaml /etc/seeta_face_feature_server/config
+    echo "Installed /etc/seeta_face_feature_server/config/config.yaml"
+  fi
+
+  ;;
+
+esac

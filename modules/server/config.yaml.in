@@ -1,0 +1,22 @@
+# 应用ID
+appId: "5855a36b4ab7d26f74c26e7921cdad2b"
+# http 服务配置
+server:
+    # http server 线程数量
+    http_thread_num: 4
+    # http server 端口
+    http_port: @DEFAULT_HTTP_SRVER_PORT@
+    # http server 请求日志文件
+    http_log: "@DEFAULT_HTTP_SRVER_LOG_DIR@"
+
+# 识别器配置
+recognizer:
+    # 特征提取器池子大小
+    engine_pool_szie: 4
+    # 人脸识别相关模型目录
+    face_model_dir: "@DEFAULT_FACE_MODELE_DIR@"
+
+# 存储配置
+storage:
+    # 数据目录
+    data_dir: "@DEFAULT_FACE_DATA_DIR@"

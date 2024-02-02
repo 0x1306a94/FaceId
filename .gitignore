@@ -89,5 +89,6 @@ Temporary Items
 /build
 /download_deps
 /build_*
+/sf3.0_models
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,linux,c++
