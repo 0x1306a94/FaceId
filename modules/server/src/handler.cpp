@@ -1,7 +1,10 @@
 
 
+#include "config.hpp"
+
 #include "SimilarityCalculator.hpp"
 #include "handler.hpp"
+#include "server_context.hpp"
 #include "spdlog_common.hpp"
 
 #include "../common/src/AutoBuffer.hpp"
@@ -9,6 +12,7 @@
 #include "../common/src/util.hpp"
 #include "../recognizer/src/FeatureEngine.hpp"
 #include "../recognizer/src/FeatureEnginePool.hpp"
+#include "../storage/src/Storage.hpp"
 
 #include <hv/HttpMessage.h>
 #include <hv/HttpService.h>
@@ -351,6 +355,15 @@ int Handler::queryFeature(const HttpContextPtr &ctx) {
         SPDLOG_ERROR("index params empty");
         return sendFail(ctx, -1, "index params empty");
     }
+
+    do {
+        auto storage = Context::Current()->GetStorage();
+        auto feature = storage->QueryFeature(value);
+        nlohmann::json response;
+        response["code"] = "0";
+        response["result"] = feature;
+        return ctx->send(response.dump());
+    } while (0);
 
     int64_t index = -1;
 

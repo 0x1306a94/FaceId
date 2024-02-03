@@ -21,10 +21,15 @@ Context::Context(MainConfig config)
 void Context::Init(MainConfig config) {
     g_context = new Context(config);
     g_context->m_storage = std::make_shared<storage::Storage>(config.appId, config.storage.data_dir);
+//    g_context->m_storage->GenerateTestData();
 }
 
 Context *Context::Current() {
     return g_context;
+}
+
+std::shared_ptr<storage::Storage> Context::GetStorage() {
+    return m_storage;
 }
 
 };  // namespace server

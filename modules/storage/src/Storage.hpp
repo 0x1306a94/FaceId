@@ -12,7 +12,7 @@
 
 #include <memory>
 #include <string>
-
+#include <vector>
 namespace face {
 namespace storage {
 class AppFile;
@@ -21,6 +21,10 @@ class Storage {
     FACE_MAKE_NONCOPYABLE(Storage);
     explicit Storage(const std::string &appId, const std::string &dataDir);
     ~Storage();
+
+    void GenerateTestData();
+    void QueryTestData();
+    std::vector<float> QueryFeature(const std::string &userId);
 
   private:
     class Implement;

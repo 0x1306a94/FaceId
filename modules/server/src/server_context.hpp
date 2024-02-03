@@ -27,6 +27,7 @@ class Context {
     explicit Context(MainConfig config);
     static void Init(MainConfig config);
     static Context *Current();
+    std::shared_ptr<storage::Storage> GetStorage();
 
   private:
     std::shared_ptr<storage::Storage> m_storage;
