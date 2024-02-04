@@ -25,6 +25,9 @@ cmake -S $WCDB_DIR/tools/version -B $WCDB_BUILD_DIR \
 -DCMAKE_INSTALL_PREFIX="$WCDB_INSTALL_DIR"
 
 cmake --build $WCDB_BUILD_DIR -j8
-cmake --install $WCDB_BUILD_DIR
+# cmake --install $WCDB_BUILD_DIR
+mkdir -p $WCDB_INSTALL_DIR/{include,lib}
+cp -Rf $WCDB_BUILD_DIR/export_headers/WCDB $WCDB_INSTALL_DIR/include/
+cp -Rf $WCDB_BUILD_DIR/libWCDB.so $WCDB_INSTALL_DIR/lib/
 
 cd $CUR_DIR

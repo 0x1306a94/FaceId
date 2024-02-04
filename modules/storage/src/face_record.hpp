@@ -8,7 +8,12 @@
 #ifndef face_record_hpp
 #define face_record_hpp
 
+#ifdef __APPLE__
 #include <WCDBCpp/WCDBCpp.h>
+#else
+#include <WCDB/WCDBCpp.h>
+#endif
+
 #include <vector>
 namespace face {
 namespace storage {

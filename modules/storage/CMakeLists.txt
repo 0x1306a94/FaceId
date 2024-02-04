@@ -3,11 +3,10 @@ project(face_id_storage)
 
 message(STATUS "Configuration: ${PROJECT_NAME}")
 
-if(APPLE)
-    set(CMAKE_INSTALL_RPATH "@loader_path/../lib") 
-endif()
-
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+# if(APPLE)
+#   set(CMAKE_INSTALL_RPATH "@loader_path/../lib")
+#   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+# endif()
 
 find_library(SPDLOG_LIB spdlog HINTS "${SPDLOG_DIR}/lib" NO_DEFAULT_PATH REQUIRED)
 message(STATUS "SPDLOG_LIB: ${SPDLOG_LIB}")
@@ -27,6 +26,7 @@ ${SPDLOG_LIB}
 face_id_common)
 
 if(APPLE)
+
 set_target_properties(${PROJECT_NAME} PROPERTIES
   MACOSX_BUNDLE FALSE
   XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
@@ -38,9 +38,21 @@ find_library(WCDB_FRAMEWORK_LIBRARY WCDBCpp HINTS "${WCDB_DIR}/" PATH_SUFFIXES "
 message(STATUS "WCDB_FRAMEWORK_LIBRARY: ${WCDB_FRAMEWORK_LIBRARY}")
 target_link_libraries(${PROJECT_NAME} PRIVATE ${WCDB_FRAMEWORK_LIBRARY})
 install(DIRECTORY ${WCDB_FRAMEWORK_LIBRARY} DESTINATION lib)
+
 else()
 
+find_library(WCDB_LIB WCDB HINTS "${WCDB_DIR}/lib" NO_DEFAULT_PATH REQUIRED)
+message(STATUS "WCDB_LIB: ${WCDB_LIB}")
+target_link_libraries(${PROJECT_NAME} PRIVATE ${WCDB_LIB})
+target_include_directories(${PROJECT_NAME} PRIVATE ${WCDB_DIR}/include)
+install(FILES ${WCDB_LIB} DESTINATION lib)
+
 endif()
+
+if(NOT APPLE)
+  target_compile_options(${PROJECT_NAME} PRIVATE  -Wno-unknown-pragmas -Wno-pragmas -Wno-deprecated -Wno-unused-variable -fpermissive)
+endif()
+
 
 install(TARGETS ${PROJECT_NAME}
 LIBRARY DESTINATION lib

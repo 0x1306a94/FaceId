@@ -4,9 +4,9 @@ project(face_id_server)
 message(STATUS "Configuration: ${PROJECT_NAME}")
 
 if(APPLE)
-    set(CMAKE_INSTALL_RPATH "@executable_path/../lib") 
+  set(CMAKE_INSTALL_RPATH "@executable_path/../lib")
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif()
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 find_library(SPDLOG_LIB spdlog HINTS "${SPDLOG_DIR}/lib" NO_DEFAULT_PATH REQUIRED)
 message(STATUS "SPDLOG_LIB: ${SPDLOG_LIB}")

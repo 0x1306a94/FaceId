@@ -14,7 +14,11 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/stopwatch.h>
 
+#ifdef __APPLE__
 #include <WCDBCpp/WCDBCpp.h>
+#else
+#include <WCDB/WCDBCpp.h>
+#endif
 
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
