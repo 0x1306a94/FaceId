@@ -30,9 +30,9 @@ file(MAKE_DIRECTORY "${DEFAULT_HTTP_SRVER_LOG_DIR}")
 set(DEFAULT_FACE_ID_DATA_DIR "${CMAKE_INSTALL_PREFIX}/data" CACHE STRING INTERNAL)
 file(MAKE_DIRECTORY "${DEFAULT_FACE_ID_DATA_DIR}")
 
-file(INSTALL ${CMAKE_CURRENT_SOURCE_DIR}/../../sf3.0_models/face_detector.csta DESTINATION ${CMAKE_INSTALL_PREFIX}/sf3.0_models)
-file(INSTALL ${CMAKE_CURRENT_SOURCE_DIR}/../../sf3.0_models/face_landmarker_pts5.csta DESTINATION ${CMAKE_INSTALL_PREFIX}/sf3.0_models)
-file(INSTALL ${CMAKE_CURRENT_SOURCE_DIR}/../../sf3.0_models/face_recognizer.csta DESTINATION ${CMAKE_INSTALL_PREFIX}/sf3.0_models)
+file(INSTALL ${FACE_ID_ROOT_DIR}/sf3.0_models/face_detector.csta DESTINATION ${CMAKE_INSTALL_PREFIX}/sf3.0_models)
+file(INSTALL ${FACE_ID_ROOT_DIR}/sf3.0_models/face_landmarker_pts5.csta DESTINATION ${CMAKE_INSTALL_PREFIX}/sf3.0_models)
+file(INSTALL ${FACE_ID_ROOT_DIR}/sf3.0_models/face_recognizer.csta DESTINATION ${CMAKE_INSTALL_PREFIX}/sf3.0_models)
 set(DEFAULT_FACE_ID_MODELE_DIR "${CMAKE_INSTALL_PREFIX}/sf3.0_models" CACHE STRING INTERNAL)
 
 file(INSTALL ${CMAKE_CURRENT_LIST_DIR}/service_stop.sh 
@@ -48,9 +48,9 @@ file(GLOB SELF_SRCS src/*.hpp src/*.cpp)
 add_executable(${PROJECT_NAME} ${SELF_SRCS})
 target_include_directories(${PROJECT_NAME} PRIVATE 
 ./src
-../common/src
-../recognizer/src
-../storage/src
+${FACE_ID_ROOT_DIR}/libs/common/src
+${FACE_ID_ROOT_DIR}/libs/recognizer/src
+${FACE_ID_ROOT_DIR}/libs/storage/src
 ${LIBHV_DIR}/include
 ${YAML_CPP_DIR}/include
 ${SPDLOG_DIR}/include

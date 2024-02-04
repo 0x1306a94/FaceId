@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "result.hpp"
+#include "../common/src/result.hpp"
 
 namespace face {
 namespace common {

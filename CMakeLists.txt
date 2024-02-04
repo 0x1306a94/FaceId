@@ -17,6 +17,8 @@ message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
 message(STATUS "CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
 
+set(FACE_ID_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR})
+
 set(THIRD_PARTY_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/third_party)
 set(THIRD_PARTY_BUILD_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/build_3rdparty)
 set(SEETA_FACE_DIR ${THIRD_PARTY_BUILD_ROOT_DIR}/SeetaFace6Open)
@@ -53,4 +55,5 @@ download_and_extract(
     EXTRACT_DIR ${CMAKE_CURRENT_LIST_DIR}/sf3.0_models
 )
 
-add_subdirectory(modules)
+add_subdirectory(libs)
+add_subdirectory(tools)
