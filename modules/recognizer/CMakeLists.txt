@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(face_id_recognizer)
 
+message(STATUS "Configuration: ${PROJECT_NAME}")
+
 find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs CONFIG)
 message(STATUS "OpenCV library status:")
 message(STATUS "    version: ${OpenCV_VERSION}")
@@ -13,13 +15,16 @@ endif()
 
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-list(APPEND SEETA_DEP_LIBS 
-SeetaAuthorize
-tennis
-SeetaFaceDetector600 
-SeetaFaceLandmarker600 
-SeetaFaceRecognizer610
-)
+find_library(SEETA_FACE_AUTHORIZE_LIB SeetaAuthorize HINTS "${SEETA_FACE_DIR}/lib64" NO_DEFAULT_PATH REQUIRED)
+find_library(SEETA_FACE_TENNIS_LIB tennis HINTS "${SEETA_FACE_DIR}/lib64" NO_DEFAULT_PATH REQUIRED)
+find_library(SEETA_FACE_DETECTOR_LIB SeetaFaceDetector600 HINTS "${SEETA_FACE_DIR}/lib64" NO_DEFAULT_PATH REQUIRED)
+find_library(SEETA_FACE_LANDMARKER_LIB SeetaFaceLandmarker600 HINTS "${SEETA_FACE_DIR}/lib64" NO_DEFAULT_PATH REQUIRED)
+find_library(SEETA_FACE_RECOGNIZER_LIB SeetaFaceRecognizer610 HINTS "${SEETA_FACE_DIR}/lib64" NO_DEFAULT_PATH REQUIRED)
+list(APPEND SEETA_FACE_LIBS ${SEETA_FACE_AUTHORIZE_LIB} ${SEETA_FACE_TENNIS_LIB} ${SEETA_FACE_DETECTOR_LIB} ${SEETA_FACE_LANDMARKER_LIB} ${SEETA_FACE_RECOGNIZER_LIB})
+message(STATUS "SEETA_FACE_LIBS: ${SEETA_FACE_LIBS}")
+
+find_library(SPDLOG_LIB spdlog HINTS "${SPDLOG_DIR}/lib" NO_DEFAULT_PATH REQUIRED)
+message(STATUS "SPDLOG_LIB: ${SPDLOG_LIB}")
 
 file(GLOB SELF_SRCS src/*.hpp src/*.cpp)
 add_library(${PROJECT_NAME} SHARED ${SELF_SRCS})
@@ -30,14 +35,14 @@ ${SEETA_FACE_DIR}/include
 ${SPDLOG_DIR}/include
 ${OpenCV_INCLUDE_DIRS})
 
-target_link_directories(${PROJECT_NAME} PRIVATE 
-${SEETA_FACE_DIR}/lib64 
-${SPDLOG_DIR}/lib)
+# target_link_directories(${PROJECT_NAME} PRIVATE 
+# ${SEETA_FACE_DIR}/lib64 
+# ${SPDLOG_DIR}/lib)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
 ${OpenCV_LIBS} 
-${SEETA_DEP_LIBS}
-spdlog
+${SEETA_FACE_LIBS}
+${SPDLOG_LIB}
 face_id_common)
 
 if(APPLE)

@@ -1,11 +1,16 @@
 cmake_minimum_required(VERSION 3.16)
 project(face_id_storage)
 
+message(STATUS "Configuration: ${PROJECT_NAME}")
+
 if(APPLE)
     set(CMAKE_INSTALL_RPATH "@loader_path/../lib") 
 endif()
 
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+find_library(SPDLOG_LIB spdlog HINTS "${SPDLOG_DIR}/lib" NO_DEFAULT_PATH REQUIRED)
+message(STATUS "SPDLOG_LIB: ${SPDLOG_LIB}")
 
 file(GLOB SELF_SRCS src/*.hpp src/*.cpp)
 add_library(${PROJECT_NAME} SHARED ${SELF_SRCS})
@@ -14,11 +19,11 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 ../common/src
 ${SPDLOG_DIR}/include)
 
-target_link_directories(${PROJECT_NAME} PRIVATE 
-${SPDLOG_DIR}/lib)
+# target_link_directories(${PROJECT_NAME} PRIVATE 
+# ${SPDLOG_DIR}/lib)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
-spdlog
+${SPDLOG_LIB}
 face_id_common)
 
 if(APPLE)

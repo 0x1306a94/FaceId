@@ -1,10 +1,21 @@
 cmake_minimum_required(VERSION 3.16)
 project(face_id_server)
 
+message(STATUS "Configuration: ${PROJECT_NAME}")
+
 if(APPLE)
     set(CMAKE_INSTALL_RPATH "@executable_path/../lib") 
 endif()
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+find_library(SPDLOG_LIB spdlog HINTS "${SPDLOG_DIR}/lib" NO_DEFAULT_PATH REQUIRED)
+message(STATUS "SPDLOG_LIB: ${SPDLOG_LIB}")
+
+find_library(YAML_CPP_LIB yaml-cpp HINTS "${YAML_CPP_DIR}/lib" NO_DEFAULT_PATH REQUIRED)
+message(STATUS "YAML_CPP_LIB: ${YAML_CPP_LIB}")
+
+find_library(HV_LIB hv HINTS "${LIBHV_DIR}/lib" NO_DEFAULT_PATH REQUIRED)
+message(STATUS "HV_LIB: ${HV_LIB}")
 
 # 默认 http server 端口
 set(DEFAULT_HTTP_SRVER_PORT "6666" CACHE STRING INTERNAL)
@@ -37,15 +48,16 @@ ${LIBHV_DIR}/include
 ${YAML_CPP_DIR}/include
 ${SPDLOG_DIR}/include)
 
-target_link_directories(${PROJECT_NAME} PRIVATE 
-${SEETA_FACE_DIR}/lib64 
-${LIBHV_DIR}/lib 
-${YAML_CPP_DIR}/lib
-${SPDLOG_DIR}/lib)
+# target_link_directories(${PROJECT_NAME} PRIVATE 
+# ${SEETA_FACE_DIR}/lib64 
+# ${LIBHV_DIR}/lib 
+# ${YAML_CPP_DIR}/lib
+# ${SPDLOG_DIR}/lib)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
-yaml-cpp
-hv
+${YAML_CPP_LIB}
+${HV_LIB}
+${SPDLOG_LIB}
 face_id_common
 face_id_recognizer
 face_id_storage)

@@ -20,4 +20,8 @@ git clone -b v2.0.4 https://github.com/Tencent/wcdb $WCDB_DIR
 cd $WCDB_DIR
 git submodule update --init sqlcipher
 
+echo "apply WCDB patch"
+git apply --check $GIT_ROOT_DIR/patch/wcdb_v2.0.4.patch
+git apply $GIT_ROOT_DIR/patch/wcdb_v2.0.4.patch
+
 cd $CUR_DIR

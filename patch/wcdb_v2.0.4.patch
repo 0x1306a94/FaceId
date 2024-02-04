@@ -1,0 +1,13 @@
+diff --git a/tools/version/build.sh b/tools/version/build.sh
+index 65532fa0..8aa975ee 100755
+--- a/tools/version/build.sh
++++ b/tools/version/build.sh
+@@ -127,7 +127,7 @@ case "$platform" in
+         platformBasedParameters+=('product="$products/$configuration-iphonesimulator/$target.framework" sdk=iphonesimulator arch=x86_64')
+     ;;
+     macOS)
+-        platformBasedParameters+=('product="$products/$configuration/$target.framework" sdk=macosx arch=x86_64')
++        platformBasedParameters+=('product="$products/$configuration/$target.framework" sdk=macosx arch="x86_64 -arch arm64"')
+     ;;
+     watchOS)
+         platformBasedParameters+=('product="$products/$configuration-watchos/$target.framework" sdk=watchos arch="armv7k -arch arm64_32"')
