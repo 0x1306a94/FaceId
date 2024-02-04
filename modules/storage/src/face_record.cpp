@@ -14,11 +14,21 @@ WCDB_CPP_ORM_IMPLEMENTATION_BEGIN(FaceRecord)
 WCDB_CPP_SYNTHESIZE_COLUMN(identifier, "id")
 WCDB_CPP_SYNTHESIZE_COLUMN(userId, "user_id")
 WCDB_CPP_SYNTHESIZE_COLUMN(userInfo, "user_info")
-WCDB_CPP_SYNTHESIZE(feature)
+WCDB_CPP_SYNTHESIZE_COLUMN(fileIndex, "file_index")
+WCDB_CPP_SYNTHESIZE_COLUMN(fileOffset, "file_offset")
+WCDB_CPP_SYNTHESIZE_COLUMN(createDate, "create_at")
+WCDB_CPP_SYNTHESIZE_COLUMN(updateDate, "update_at")
 
 WCDB_CPP_PRIMARY_AUTO_INCREMENT(identifier)
+
+WCDB_CPP_DEFAULT(createDate, WCDB::LiteralValue::currentTimestamp())
+WCDB_CPP_DEFAULT(updateDate, WCDB::LiteralValue::currentTimestamp())
+
 WCDB_CPP_NOT_NULL(userId)
-WCDB_CPP_NOT_NULL(feature)
+WCDB_CPP_NOT_NULL(fileIndex)
+WCDB_CPP_NOT_NULL(fileOffset)
+WCDB_CPP_NOT_NULL(createDate)
+WCDB_CPP_NOT_NULL(updateDate)
 
 WCDB_CPP_INDEX("_userIdIndex", userId)
 
@@ -29,14 +39,15 @@ std::string FaceRecord::TableName() {
 }
 
 FaceRecord::FaceRecord()
-    : FaceRecord("", WCDB::Data::null()) {
+    : FaceRecord("", -1, -1) {
 }
 
-FaceRecord::FaceRecord(const std::string &userId, WCDB::Data feature)
+FaceRecord::FaceRecord(const std::string &userId, long fileIndex, long fileOffset)
     : identifier(-1)
     , userId(userId)
     , userInfo(std::string())
-    , feature(std::move(feature)) {
+    , fileIndex(fileIndex)
+    , fileOffset(fileOffset) {
 }
 }  // namespace storage
 };  // namespace face

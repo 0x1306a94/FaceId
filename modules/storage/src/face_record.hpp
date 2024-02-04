@@ -22,10 +22,13 @@ class FaceRecord {
     long long identifier;
     std::string userId;
     std::string userInfo;
-    WCDB::Data feature;
+    long fileIndex;
+    long fileOffset;
+    std::uint64_t createDate;
+    std::uint64_t updateDate;
 
     FaceRecord();
-    FaceRecord(const std::string &userId, WCDB::Data feature);
+    FaceRecord(const std::string &userId, long fileIndex, long fileOffset);
     WCDB_CPP_ORM_DECLARATION(FaceRecord);
 
     static std::string TableName();
