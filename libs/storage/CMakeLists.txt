@@ -11,8 +11,17 @@ message(STATUS "Configuration: ${PROJECT_NAME}")
 find_library(SPDLOG_LIB spdlog HINTS "${SPDLOG_DIR}/lib" NO_DEFAULT_PATH REQUIRED)
 message(STATUS "SPDLOG_LIB: ${SPDLOG_LIB}")
 
-file(GLOB SELF_SRCS src/*.hpp src/*.cpp)
-add_library(${PROJECT_NAME} SHARED ${SELF_SRCS})
+if(APPLE)
+  set(FILE_GLOB_OPTION RELATIVE)
+endif()
+
+file(GLOB SRC_SRCS src/*.hpp src/*.cpp)
+file(GLOB ORM_SRCS src/orm/*.hpp src/orm/*.cpp)
+
+source_group(src FILES ${SRC_SRCS})
+source_group(orm FILES ${ORM_SRCS})
+
+add_library(${PROJECT_NAME} SHARED ${SRC_SRCS} ${ORM_SRCS})
 target_include_directories(${PROJECT_NAME} PRIVATE 
 ./src
 ../common/src

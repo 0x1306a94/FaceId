@@ -1,5 +1,12 @@
-#ifndef __face_id_server_config_h
-#define __face_id_server_config_h
+//
+//  face_id_cli_config.hpp
+//  face_id
+//
+//  Created by king on 2024/2/4.
+//
+
+#ifndef face_id_cli_config
+#define face_id_cli_config
 
 #include <string>
 
@@ -9,20 +16,14 @@
 #include <yaml-cpp/node/node.h>
 
 namespace face {
-namespace server {
-struct Config {
-    std::int16_t http_thread_num = 4;
-    std::int16_t http_port = 6666;
-    std::string http_log = "";
-};
+namespace cli {
 
 struct MainConfig {
-    server::Config server;
     recognizer::Config recognizer;
     storage::Config storage;
 };
 
-}  // namespace server
+}  // namespace cli
 };  // namespace face
 
 namespace YAML {
@@ -62,47 +63,15 @@ struct convert<face::storage::Config> {
 };
 
 template <>
-struct convert<face::server::Config> {
-    static Node encode(const face::server::Config &rhs) {
+struct convert<face::cli::MainConfig> {
+    static Node encode(const face::cli::MainConfig &rhs) {
         Node node;
-        node["http_thread_num"] = rhs.http_thread_num;
-        node["http_port"] = rhs.http_port;
-        node["http_log"] = rhs.http_log;
-        return node;
-    }
-
-    static bool decode(const Node &node, face::server::Config &rhs) {
-
-        if (node["http_thread_num"]) {
-            std::int16_t num = node["http_thread_num"].as<std::int16_t>();
-            std::int16_t min = 1;
-            rhs.http_thread_num = std::max(min, num);
-        }
-
-        if (node["http_port"]) {
-            rhs.http_port = node["http_port"].as<std::int16_t>();
-        }
-        if (node["http_log"]) {
-            rhs.http_log = node["http_log"].as<std::string>();
-        }
-        return true;
-    }
-};
-
-template <>
-struct convert<face::server::MainConfig> {
-    static Node encode(const face::server::MainConfig &rhs) {
-        Node node;
-        node["server"] = rhs.server;
         node["recognizer"] = rhs.recognizer;
         node["storage"] = rhs.storage;
         return node;
     }
 
-    static bool decode(const Node &node, face::server::MainConfig &rhs) {
-        if (node["server"]) {
-            rhs.server = node["server"].as<face::server::Config>();
-        }
+    static bool decode(const Node &node, face::cli::MainConfig &rhs) {
         if (node["recognizer"]) {
             rhs.recognizer = node["recognizer"].as<face::recognizer::Config>();
         }
@@ -113,4 +82,5 @@ struct convert<face::server::MainConfig> {
     }
 };
 }  // namespace YAML
-#endif
+
+#endif /* face_id_cli_config */

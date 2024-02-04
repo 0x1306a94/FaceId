@@ -7,9 +7,13 @@
 
 #include "Storage.hpp"
 #include "app_file.hpp"
-#include "application_orm.hpp"
-#include "face_record_orm.hpp"
+#include "config.hpp"
 #include "spdlog_common.hpp"
+
+#include "./orm/application_orm.hpp"
+#include "./orm/face_record_orm.hpp"
+
+#include "application.hpp"
 
 #include "../common/src/date_util.hpp"
 
@@ -35,16 +39,16 @@ namespace storage {
 
 class Storage::Implement {
   public:
-    std::string m_appId;
+    Config m_config;
     fs::path m_dataDir;
     fs::path m_dbDir;
     fs::path m_featureDir;
     std::shared_ptr<WCDB::Database> m_db;
-    explicit Implement(const std::string &appId, const std::string &dataDir)
-        : m_appId(appId)
-        , m_dataDir(dataDir)
-        , m_dbDir(dataDir + "/db")
-        , m_featureDir(dataDir + "/feature/" + appId)
+    explicit Implement(const Config &config)
+        : m_config(config)
+        , m_dataDir(config.data_dir)
+        , m_dbDir(config.data_dir + "/db")
+        , m_featureDir(config.data_dir + "/feature")
         , m_db(nullptr) {
 
         if (!fs::exists(m_dbDir)) {
@@ -65,7 +69,9 @@ class Storage::Implement {
 #endif
 
         this->m_db->traceError([](const WCDB::Error &error) {
-            SPDLOG_ERROR("{}", error.getMessage().data());
+            if (!error.isOK()) {
+                SPDLOG_ERROR("{}", error.getMessage().data());
+            }
         });
 
         if (this->m_db->createTable<FaceRecordORM>(FaceRecordORM::TableName())) {
@@ -156,10 +162,63 @@ class Storage::Implement {
         //        memcpy(result.data(), data.buffer(), data.size());
         //        return result;
     }
+
+    face::common::Result<Application, std::string> AddApplication(const std::string &appid, const std::string &name) {
+        if (appid.empty()) {
+            return face::common::Err<std::string>("appid null");
+        }
+
+        if (appid.length() > 32) {
+            return face::common::Err<std::string>("appid cannot exceed 32 characters");
+        }
+
+        if (name.empty()) {
+            SPDLOG_ERROR("name null");
+            return face::common::Err<std::string>("name null");
+        }
+
+        if (appid.length() > 48) {
+            return face::common::Err<std::string>("name cannot exceed 48 characters");
+        }
+
+        auto handler = this->m_db->getHandle();
+        auto select = this->m_db->prepareSelect<ApplicationORM>()
+                          .onResultFields(ApplicationORM::allFields())
+                          .fromTable(ApplicationORM::TableName())
+                          .where(WCDB_FIELD(ApplicationORM::appId) == appid)
+                          .limit(1);
+        auto record = select.firstObject();
+        if (record.succeed()) {
+            return face::common::Err<std::string>("the appid application already exists");
+        }
+
+        ApplicationORM appOrm(appid, name);
+        appOrm.isAutoIncrement = true;
+        appOrm.createDate = common::date_util::CurrentMilliTimestamp();
+        appOrm.updateDate = common::date_util::CurrentMilliTimestamp();
+
+        auto fields = {
+            WCDB_FIELD(ApplicationORM::appId),
+            WCDB_FIELD(ApplicationORM::name),
+            WCDB_FIELD(ApplicationORM::createDate),
+            WCDB_FIELD(ApplicationORM::updateDate),
+        };
+        
+        if (this->m_db->insertObjects<ApplicationORM>(appOrm, ApplicationORM::TableName(), fields)) {
+            appOrm.identifier = *appOrm.lastInsertedRowID;
+            Application appInfo(appid, name);
+            appInfo.identifier = *appOrm.lastInsertedRowID;
+            appInfo.createDate = appOrm.createDate;
+            appInfo.updateDate = appOrm.updateDate;
+            return face::common::Ok<Application>(appInfo);
+        }
+
+        return face::common::Err<std::string>("data write failure");
+    }
 };
 
-Storage::Storage(const std::string &appId, const std::string &dataDir)
-    : m_impl(std::make_unique<Implement>(appId, dataDir)) {
+Storage::Storage(const Config &config)
+    : m_impl(std::make_unique<Implement>(config)) {
 }
 
 Storage::~Storage() {
@@ -175,6 +234,10 @@ void Storage::QueryTestData() {
 
 std::vector<float> Storage::QueryFeature(const std::string &userId) {
     return m_impl->QueryFeature(userId);
+}
+
+face::common::Result<Application, std::string> Storage::AddApplication(const std::string &appid, const std::string &name) {
+    return m_impl->AddApplication(appid, name);
 }
 }  // namespace storage
 }  // namespace face

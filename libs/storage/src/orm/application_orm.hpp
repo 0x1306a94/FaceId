@@ -14,6 +14,7 @@
 #include <WCDB/WCDBCpp.h>
 #endif
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -21,7 +22,7 @@ namespace face {
 namespace storage {
 class ApplicationORM {
   public:
-    long long identifier;
+    std::uint64_t identifier;
     std::string appId;
     std::string name;
     std::uint64_t createDate;

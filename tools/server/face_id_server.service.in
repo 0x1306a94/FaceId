@@ -7,7 +7,7 @@ After=network.target
 Type=simple
 #Environment="LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/face_id_server/lib"
 Environment="DISABLE_CONSOLE_LOG=1"
-ExecStart=/opt/face_id_server/bin/face_id_server /etc/face_id_server/config/config.yaml
+ExecStart=/opt/face_id_server/bin/face_id_server --config /etc/face_id_server/config/config.yaml
 ExecStop=/opt/face_id_server/service/service_stop.sh
 
 [Install]
