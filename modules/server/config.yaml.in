@@ -14,9 +14,9 @@ recognizer:
     # 特征提取器池子大小
     engine_pool_szie: 4
     # 人脸识别相关模型目录
-    face_model_dir: "@DEFAULT_FACE_MODELE_DIR@"
+    face_model_dir: "@DEFAULT_FACE_ID_MODELE_DIR@"
 
 # 存储配置
 storage:
     # 数据目录
-    data_dir: "@DEFAULT_FACE_DATA_DIR@"
+    data_dir: "@DEFAULT_FACE_ID_DATA_DIR@"

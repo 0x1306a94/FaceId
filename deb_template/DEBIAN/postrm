@@ -7,34 +7,34 @@ purge)
 
 remove)
 
-  if [ -L /etc/ld.so.conf.d/seeta-face-feature-server.conf ]; then
-    rm -rf /etc/ld.so.conf.d/seeta-face-feature-server.conf
-    echo "Removed /etc/ld.so.conf.d/seeta-face-feature-server.conf"
+  if [ -L /etc/ld.so.conf.d/face_id_server.conf ]; then
+    rm -rf /etc/ld.so.conf.d/face_id_server.conf
+    echo "Removed /etc/ld.so.conf.d/face_id_server.conf"
     ldconfig
   fi
 
-  if [ -L /lib/systemd/system/seeta_face_feature_server.service ]; then
-    service seeta_face_feature_server stop
-    systemctl disable seeta_face_feature_server
-    rm -rf /lib/systemd/system/seeta_face_feature_server.service
+  if [ -L /lib/systemd/system/face_id_server.service ]; then
+    service face_id_server stop
+    systemctl disable face_id_server
+    rm -rf /lib/systemd/system/face_id_server.service
   fi
 
-  if [ -L /usr/local/bin/seeta_face_feature_server ]; then
-    rm -rf /usr/local/bin/seeta_face_feature_server
-    echo "Removed /usr/local/bin/seeta_face_feature_server"
+  if [ -L /usr/local/bin/face_id_server ]; then
+    rm -rf /usr/local/bin/face_id_server
+    echo "Removed /usr/local/bin/face_id_server"
   fi
   
-  if [ -L /usr/local/bin/seeta_face_feature_database_cli ]; then
-    rm -rf /usr/local/bin/seeta_face_feature_database_cli
-    echo "Removed /usr/local/bin/seeta_face_feature_database_cli"
+  # if [ -L /usr/local/bin/seeta_face_feature_database_cli ]; then
+  #   rm -rf /usr/local/bin/seeta_face_feature_database_cli
+  #   echo "Removed /usr/local/bin/seeta_face_feature_database_cli"
+  # fi
+
+  if [ -d /etc/face_id_server ]; then
+    rm -rf /etc/face_id_server
+    echo "Removed /etc/face_id_server"
   fi
 
-  if [ -d /etc/seeta_face_feature_server ]; then
-    rm -rf /etc/seeta_face_feature_server
-    echo "Removed /etc/seeta_face_feature_server"
-  fi
-
-  echo "Removed /opt/seeta_face_feature_server"
+  echo "Removed /opt/face_id_server"
   ;;
 
 upgrade | deconfigure)

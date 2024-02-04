@@ -1,10 +1,10 @@
-Package: seeta-face-feature-server
+Package: face-id-server
 Version: ${Version}
 Section: utils
 Priority: optional
 Architecture: amd64
 Installed-Size: ${Installed-Size}
-Maintainer: sunsong<sunsong@taih.com>
-Provides: taihe
-Description: 人脸特征服务
+Maintainer: kk<0x1306a94@gmail.com>
+Provides: kk
+Description: Face comparison service
 Essential: no

@@ -31,6 +31,20 @@ set(WCDB_DIR ${THIRD_PARTY_BUILD_ROOT_DIR}/wcdb)
 message(STATUS "WCDB_DIR: ${WCDB_DIR}")
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/download_file.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/Utility.cmake)
+
+set(FACE_ID_SERVER_VERSION "1.0.0")
+message(STATUS "FACE_ID_SERVER_VERSION: ${FACE_ID_SERVER_VERSION}")
+
+set(FACE_ID_SERVER_GIT_HASH "")
+get_git_hash(FACE_ID_SERVER_GIT_HASH)
+message(STATUS "FACE_ID_SERVER_GIT_HASH: ${FACE_ID_SERVER_GIT_HASH}")
+
+set(FACE_ID_SERVER_GIT_BRANCH "")
+get_git_branch(FACE_ID_SERVER_GIT_BRANCH)
+message(STATUS "FACE_ID_SERVER_GIT_BRANCH: ${FACE_ID_SERVER_GIT_BRANCH}")
+
+
 download_and_extract(
     URL https://github.com/0x1306a94/FaceId/releases/download/sf3.0_models/sf3.0_models.zip
     FILENAME ${CMAKE_CURRENT_LIST_DIR}/download_deps/sf3.0_models.zip

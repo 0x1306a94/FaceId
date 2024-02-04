@@ -27,15 +27,22 @@ else()
 endif()
 # 创建日志录
 file(MAKE_DIRECTORY "${DEFAULT_HTTP_SRVER_LOG_DIR}")
-set(DEFAULT_FACE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/data" CACHE STRING INTERNAL)
-file(MAKE_DIRECTORY "${DEFAULT_FACE_DATA_DIR}")
+set(DEFAULT_FACE_ID_DATA_DIR "${CMAKE_INSTALL_PREFIX}/data" CACHE STRING INTERNAL)
+file(MAKE_DIRECTORY "${DEFAULT_FACE_ID_DATA_DIR}")
 
 file(INSTALL ${CMAKE_CURRENT_SOURCE_DIR}/../../sf3.0_models/face_detector.csta DESTINATION ${CMAKE_INSTALL_PREFIX}/sf3.0_models)
 file(INSTALL ${CMAKE_CURRENT_SOURCE_DIR}/../../sf3.0_models/face_landmarker_pts5.csta DESTINATION ${CMAKE_INSTALL_PREFIX}/sf3.0_models)
 file(INSTALL ${CMAKE_CURRENT_SOURCE_DIR}/../../sf3.0_models/face_recognizer.csta DESTINATION ${CMAKE_INSTALL_PREFIX}/sf3.0_models)
-set(DEFAULT_FACE_MODELE_DIR "${CMAKE_INSTALL_PREFIX}/sf3.0_models" CACHE STRING INTERNAL)
+set(DEFAULT_FACE_ID_MODELE_DIR "${CMAKE_INSTALL_PREFIX}/sf3.0_models" CACHE STRING INTERNAL)
 
+file(INSTALL ${CMAKE_CURRENT_LIST_DIR}/service_stop.sh 
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/service
+  USE_SOURCE_PERMISSIONS
+)
+
+configure_file(${CMAKE_CURRENT_LIST_DIR}/face_id_server.service.in ${CMAKE_INSTALL_PREFIX}/service/face_id_server.service @ONLY)
 configure_file(${CMAKE_CURRENT_LIST_DIR}/config.yaml.in ${CMAKE_INSTALL_PREFIX}/config/config.yaml @ONLY)
+configure_file(${CMAKE_CURRENT_LIST_DIR}/version.hpp.in autogen/include/${PROJECT_NAME}/version.hpp @ONLY)
 
 file(GLOB SELF_SRCS src/*.hpp src/*.cpp)
 add_executable(${PROJECT_NAME} ${SELF_SRCS})
@@ -46,7 +53,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 ../storage/src
 ${LIBHV_DIR}/include
 ${YAML_CPP_DIR}/include
-${SPDLOG_DIR}/include)
+${SPDLOG_DIR}/include
+${CMAKE_CURRENT_BINARY_DIR}/autogen/include)
 
 # target_link_directories(${PROJECT_NAME} PRIVATE 
 # ${SEETA_FACE_DIR}/lib64 
@@ -86,10 +94,11 @@ RUNTIME DESTINATION bin
 BUNDLE DESTINATION bin
 )
 
-install(FILES
-${LIBHV_DIR}/lib/libhv${CMAKE_SHARED_LIBRARY_SUFFIX}
-DESTINATION lib
-)
+install(FILES ${HV_LIB} DESTINATION lib)
+# install(FILES
+# ${LIBHV_DIR}/lib/libhv${CMAKE_SHARED_LIBRARY_SUFFIX}
+# DESTINATION lib
+# )
 
 # install(FILES 
 # ${CMAKE_CURRENT_SOURCE_DIR}/../../sf3.0_models/face_detector.csta

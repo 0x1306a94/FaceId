@@ -1,0 +1,8 @@
+#ifndef __face_id_version_hpp__
+#define __face_id_version_hpp__
+
+#define FACE_ID_SERVER_VERSION "@FACE_ID_SERVER_VERSION@"
+#define FACE_ID_SERVER_GIT_BRANCH "@FACE_ID_SERVER_GIT_BRANCH@"
+#define FACE_ID_SERVER_GIT_HASH "@FACE_ID_SERVER_GIT_HASH@"
+
+#endif /* __face_id_version_hpp__ */
