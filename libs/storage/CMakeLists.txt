@@ -15,7 +15,7 @@ if(APPLE)
   set(FILE_GLOB_OPTION RELATIVE)
 endif()
 
-file(GLOB SRC_SRCS src/*.hpp src/*.cpp)
+file(GLOB SRC_SRCS src/*.h src/*.hpp src/*.cpp)
 file(GLOB ORM_SRCS src/orm/*.hpp src/orm/*.cpp)
 
 source_group(src FILES ${SRC_SRCS})

@@ -1,5 +1,5 @@
-#ifndef BASE_64_HPP
-#define BASE_64_HPP
+#ifndef face_id_common_BASE_64_HPP
+#define face_id_common_BASE_64_HPP
 
 #include <string>
 namespace face {
@@ -11,4 +11,4 @@ std::string from_base64(std::string const &data);
 }  // namespace common
 }  // namespace face
 
-#endif  // BASE_64_HPP
+#endif /* face_id_common_BASE_64_HPP */

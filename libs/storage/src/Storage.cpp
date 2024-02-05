@@ -6,8 +6,8 @@
 //
 
 #include "Storage.hpp"
-#include "app_file.hpp"
 #include "config.hpp"
+#include "feature_file.hpp"
 #include "spdlog_common.hpp"
 
 #include "./orm/application_orm.hpp"
@@ -30,6 +30,9 @@
 
 #include <filesystem>
 
+#include <mutex>
+#include <unordered_map>
+
 namespace fs = std::filesystem;
 
 using std::chrono::duration_cast;
@@ -45,6 +48,8 @@ class Storage::Implement {
     fs::path m_dbDir;
     fs::path m_featureDir;
     std::shared_ptr<WCDB::Database> m_db;
+    std::mutex m_mutex;
+    std::unordered_map<std::string, std::vector<std::shared_ptr<FeatureFile>>> m_featureFiles;
     explicit Implement(const Config &config)
         : m_config(config)
         , m_dataDir(config.data_dir)
@@ -94,64 +99,32 @@ class Storage::Implement {
         }
     }
 
-    std::array<float, 1024> GenFeature(void) {
-        std::array<float, 1024> result;
-        for (int i = 0; i < 1024; i++) {
-            float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 0.01;
-            result[i] = r;
+    std::shared_ptr<FeatureFile> GetFeatureFile(const std::string &appid) {
+        if (appid.empty()) {
+            return nullptr;
         }
-        return result;
-    }
-
-    void GenerateTestData() {
-        //        std::size_t total = 100000;
-        //        std::size_t batchSize = 5000;
-        //        std::size_t step = total / batchSize;
-        //
-        //        spdlog::stopwatch sw;
-        //        SPDLOG_INFO("开始生成10w测试数");
-        //        for (std::size_t idx = 0; idx < step; idx++) {
-        //            std::list<FaceRecordORM> records;
-        //            for (std::size_t j = 0; j < batchSize; j++) {
-        //                //                std::array<float, 1024> featureArray = GenFeature();
-        //                //                WCDB::Data feature((unsigned char *)featureArray.data(), sizeof(float) * featureArray.size());
-        //                //                memcpy(feature.data(), featureArray.data(), feature.size());
-        //                records.emplace_back(this->m_appId, std::to_string(idx * batchSize + j + 1), idx, j);
-        //                auto &record = records.back();
-        //                record.isAutoIncrement = true;
-        //                record.createDate = common::date_util::CurrentMilliTimestamp();
-        //                record.updateDate = common::date_util::CurrentMilliTimestamp();
-        //            }
-        //            this->m_db->runTransaction([&](WCDB::Handle &handler) -> bool {
-        //                bool ret = true;
-        //                for (auto &record : records) {
-        //                    auto fields = {
-        //                        WCDB_FIELD(FaceRecordORM::appId),
-        //                        WCDB_FIELD(FaceRecordORM::userId),
-        //                        WCDB_FIELD(FaceRecordORM::userInfo),
-        //                        WCDB_FIELD(FaceRecordORM::fileIndex),
-        //                        WCDB_FIELD(FaceRecordORM::fileOffset),
-        //                        WCDB_FIELD(FaceRecordORM::createDate),
-        //                        WCDB_FIELD(FaceRecordORM::updateDate),
-        //                    };
-        //                    ret &= handler.insertObjects<FaceRecordORM>(record, FaceRecordORM::TableName(), fields);
-        //                    record.identifier = handler.getLastInsertedRowID();
-        //                }
-        //                return ret;
-        //            });
-        //        }
-        //        SPDLOG_INFO("生成10w测试数据耗时: {}", duration_cast<milliseconds>(sw.elapsed()));
-    }
-
-    void QueryTestData() {
-        spdlog::stopwatch sw;
-        SPDLOG_INFO("开始查询10w测试数");
-        auto result = this->m_db->getAllObjects<FaceRecordORM>(FaceRecordORM::TableName());
-        if (result.hasValue()) {
-            auto &records = result.value();
+        std::lock_guard<std::mutex> lock(m_mutex);
+        auto iter = m_featureFiles.find(appid);
+        if (iter == m_featureFiles.end()) {
+            auto file = std::make_shared<FeatureFile>(appid, 0, m_featureDir.string());
+            std::vector<std::shared_ptr<FeatureFile>> files;
+            files.push_back(file);
+            m_featureFiles.emplace(appid, std::move(files));
+            return file;
+        }
+        auto &files = iter->second;
+        std::int16_t index = 0;
+        for (auto file : files) {
+            std::int16_t fileIndex = file->GetIndex();
+            if (!file->IsFull()) {
+                return file;
+            }
+            index = std::max(index, fileIndex);
         }
 
-        SPDLOG_INFO("查询10w测试数据耗时: {}", duration_cast<milliseconds>(sw.elapsed()));
+        auto file = std::make_shared<FeatureFile>(appid, index + 1, m_featureDir.string());
+        files.push_back(file);
+        return file;
     }
 
     std::vector<float> QueryFeature(const std::string &userId) {
@@ -241,6 +214,54 @@ class Storage::Implement {
         }
         return results;
     }
+
+    bool AddFaceRecord(const std::string &appId, const std::string &userId, const std::string &userInfo, const std::vector<float> &feature) {
+        auto featureFile = GetFeatureFile(appId);
+        if (!featureFile) {
+            return false;
+        }
+
+        return this->m_db->runTransaction([&](WCDB::Handle &handler) -> bool {
+            auto existUser = handler.getFirstObject<UserORM>(UserORM::TableName(), {WCDB_FIELD(UserORM::appId) == appId && WCDB_FIELD(UserORM::userId) == userId});
+            auto write = featureFile->AddFeature(feature);
+            if (!write.has_value()) {
+                return false;
+            }
+
+            auto ts = common::date_util::CurrentMilliTimestamp();
+            UserORM user(appId, userId, userInfo);
+            user.createDate = ts;
+            user.updateDate = ts;
+            if (existUser.failed()) {
+                if (!handler.insertObjects<UserORM>(user, UserORM::TableName())) {
+                    return false;
+                }
+            } else {
+                auto fields = {
+                    WCDB_FIELD(UserORM::userInfo),
+                    WCDB_FIELD(UserORM::updateDate),
+                };
+                if (!handler.updateObject<UserORM>(user, fields, UserORM::TableName())) {
+                    return false;
+                }
+            }
+            auto fileIndex = featureFile->GetIndex();
+            FaceRecordORM face(appId, userId, fileIndex, write.value());
+            face.isAutoIncrement = true;
+            face.createDate = ts;
+            face.updateDate = ts;
+            auto fields = {
+                WCDB_FIELD(FaceRecordORM::appId),
+                WCDB_FIELD(FaceRecordORM::userId),
+                WCDB_FIELD(FaceRecordORM::fileIndex),
+                WCDB_FIELD(FaceRecordORM::fileOffset),
+                WCDB_FIELD(FaceRecordORM::createDate),
+                WCDB_FIELD(FaceRecordORM::updateDate),
+            };
+            auto res = handler.insertObjects<FaceRecordORM>(face, FaceRecordORM::TableName(), fields);
+            return res;
+        });
+    }
 };
 
 Storage::Storage(const Config &config)
@@ -248,14 +269,6 @@ Storage::Storage(const Config &config)
 }
 
 Storage::~Storage() {
-}
-
-void Storage::GenerateTestData() {
-    m_impl->GenerateTestData();
-}
-
-void Storage::QueryTestData() {
-    m_impl->QueryTestData();
 }
 
 std::vector<float> Storage::QueryFeature(const std::string &userId) {
@@ -268,6 +281,10 @@ face::common::Result<Application, std::string> Storage::AddApplication(const std
 
 std::list<Application> Storage::Applocations(std::int64_t limit) {
     return m_impl->Applocations(limit);
+}
+
+bool Storage::AddFaceRecord(const std::string &appId, const std::string &userId, const std::string &userInfo, const std::vector<float> &feature) {
+    return m_impl->AddFaceRecord(appId, userId, userInfo, feature);
 }
 }  // namespace storage
 }  // namespace face

@@ -1,5 +1,5 @@
-#ifndef __AutoBuffer_hpp__
-#define __AutoBuffer_hpp__
+#ifndef __face_id_common_AutoBuffer_hpp__
+#define __face_id_common_AutoBuffer_hpp__
 
 #include <iostream>
 #include <stdio.h>
@@ -41,4 +41,4 @@ class AutoBuffer {
 };
 }  // namespace common
 }  // namespace face
-#endif
+#endif /* __face_id_common_AutoBuffer_hpp__ */
