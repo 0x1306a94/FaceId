@@ -5,8 +5,8 @@
 //  Created by king on 2024/2/2.
 //
 
-#ifndef feature_file_hpp
-#define feature_file_hpp
+#ifndef face_id_storage_feature_file_hpp
+#define face_id_storage_feature_file_hpp
 
 #include "noncopyable.hpp"
 
@@ -29,4 +29,4 @@ class FeatureFile {
 }  // namespace storage
 };  // namespace face
 
-#endif /* feature_file_hpp */
+#endif /* face_id_storage_feature_file_hpp */

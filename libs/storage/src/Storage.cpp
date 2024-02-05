@@ -12,6 +12,7 @@
 
 #include "./orm/application_orm.hpp"
 #include "./orm/face_record_orm.hpp"
+#include "./orm/user_orm.hpp"
 
 #include "application.hpp"
 
@@ -74,12 +75,22 @@ class Storage::Implement {
             }
         });
 
-        if (this->m_db->createTable<FaceRecordORM>(FaceRecordORM::TableName())) {
-            SPDLOG_INFO("createTable: {}", FaceRecordORM::TableName());
-        }
-
         if (this->m_db->createTable<ApplicationORM>(ApplicationORM::TableName())) {
             SPDLOG_INFO("createTable: {}", ApplicationORM::TableName());
+        } else {
+            SPDLOG_ERROR("createTable fail: {}", ApplicationORM::TableName());
+        }
+
+        if (this->m_db->createTable<UserORM>(UserORM::TableName())) {
+            SPDLOG_INFO("createTable: {}", UserORM::TableName());
+        } else {
+            SPDLOG_ERROR("createTable fail: {}", UserORM::TableName());
+        }
+
+        if (this->m_db->createTable<FaceRecordORM>(FaceRecordORM::TableName())) {
+            SPDLOG_INFO("createTable: {}", FaceRecordORM::TableName());
+        } else {
+            SPDLOG_ERROR("createTable fail: {}", FaceRecordORM::TableName());
         }
     }
 
@@ -181,7 +192,6 @@ class Storage::Implement {
             return face::common::Err<std::string>("name cannot exceed 48 characters");
         }
 
-        auto handler = this->m_db->getHandle();
         auto select = this->m_db->prepareSelect<ApplicationORM>()
                           .onResultFields(ApplicationORM::allFields())
                           .fromTable(ApplicationORM::TableName())
@@ -193,7 +203,6 @@ class Storage::Implement {
         }
 
         ApplicationORM appOrm(appid, name);
-        appOrm.isAutoIncrement = true;
         appOrm.createDate = common::date_util::CurrentMilliTimestamp();
         appOrm.updateDate = common::date_util::CurrentMilliTimestamp();
 
@@ -203,17 +212,34 @@ class Storage::Implement {
             WCDB_FIELD(ApplicationORM::createDate),
             WCDB_FIELD(ApplicationORM::updateDate),
         };
-        
+
         if (this->m_db->insertObjects<ApplicationORM>(appOrm, ApplicationORM::TableName(), fields)) {
-            appOrm.identifier = *appOrm.lastInsertedRowID;
-            Application appInfo(appid, name);
-            appInfo.identifier = *appOrm.lastInsertedRowID;
-            appInfo.createDate = appOrm.createDate;
-            appInfo.updateDate = appOrm.updateDate;
+            Application appInfo(appOrm);
             return face::common::Ok<Application>(appInfo);
         }
 
         return face::common::Err<std::string>("data write failure");
+    }
+
+    std::list<Application> Applocations(std::int64_t limit = 0) {
+        auto select = this->m_db->prepareSelect<ApplicationORM>()
+                          .onResultFields(ApplicationORM::allFields())
+                          .fromTable(ApplicationORM::TableName())
+                          .orders(WCDB_FIELD(ApplicationORM::createDate).asOrder(WCDB::Order::DESC));
+
+        if (limit > 0) {
+            select.limit(limit);
+        }
+
+        std::list<Application> results;
+        auto objects = select.allObjects();
+        if (objects.failed()) {
+            return results;
+        }
+        for (const auto &obj : objects.value()) {
+            results.emplace_back(obj);
+        }
+        return results;
     }
 };
 
@@ -238,6 +264,10 @@ std::vector<float> Storage::QueryFeature(const std::string &userId) {
 
 face::common::Result<Application, std::string> Storage::AddApplication(const std::string &appid, const std::string &name) {
     return m_impl->AddApplication(appid, name);
+}
+
+std::list<Application> Storage::Applocations(std::int64_t limit) {
+    return m_impl->Applocations(limit);
 }
 }  // namespace storage
 }  // namespace face

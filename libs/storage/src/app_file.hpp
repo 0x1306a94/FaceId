@@ -5,8 +5,8 @@
 //  Created by king on 2024/2/2.
 //
 
-#ifndef app_file_hpp
-#define app_file_hpp
+#ifndef face_id_storage_app_file_hpp
+#define face_id_storage_app_file_hpp
 
 #include "noncopyable.hpp"
 
@@ -24,4 +24,4 @@ private:
 };
 }  // namespace storage
 };     // namespace face
-#endif /* app_file_hpp */
+#endif /* face_id_storage_app_file_hpp */

@@ -3,6 +3,13 @@ project(face_id_cli)
 
 message(STATUS "Configuration: ${PROJECT_NAME}")
 
+include(FetchContent)
+
+FetchContent_Declare(json 
+URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_MakeAvailable(json)
+
+
 if(APPLE)
   set(CMAKE_INSTALL_RPATH "@executable_path/../lib")
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
@@ -33,7 +40,8 @@ ${YAML_CPP_LIB}
 face_id_common
 face_id_storage
 face_id_recognizer
-argparse)
+argparse
+PRIVATE nlohmann_json::nlohmann_json)
 
 if(APPLE)
 set_target_properties(${PROJECT_NAME} PROPERTIES

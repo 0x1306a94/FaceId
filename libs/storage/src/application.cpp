@@ -7,14 +7,22 @@
 
 #include "application.hpp"
 
+#include "./orm/application_orm.hpp"
 namespace face {
 namespace storage {
 Application::Application(const std::string &appId, const std::string &name)
-    : identifier(0)
-    , appId(appId)
+    : appId(appId)
     , name(name)
     , createDate(0)
     , updateDate(0) {
 }
+
+Application::Application(const ApplicationORM &source)
+    : appId(source.appId)
+    , name(source.name)
+    , createDate(source.createDate)
+    , updateDate(source.updateDate) {
+}
+
 };  // namespace storage
 };  // namespace face

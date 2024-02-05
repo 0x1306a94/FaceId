@@ -5,13 +5,14 @@
 //  Created by king on 2024/2/2.
 //
 
-#ifndef Storage_hpp
-#define Storage_hpp
+#ifndef face_id_storage_Storage_hpp
+#define face_id_storage_Storage_hpp
 
 #include "noncopyable.hpp"
 
 #include "result.hpp"
 
+#include <list>
 #include <memory>
 #include <optional>
 #include <string>
@@ -34,6 +35,7 @@ class Storage {
     std::vector<float> QueryFeature(const std::string &userId);
 
     face::common::Result<Application, std::string> AddApplication(const std::string &appid, const std::string &name);
+    std::list<Application> Applocations(std::int64_t limit = 0);
 
   private:
     class Implement;
@@ -41,4 +43,4 @@ class Storage {
 };
 }  // namespace storage
 }  // namespace face
-#endif /* Storage_hpp */
+#endif /* face_id_storage_Storage_hpp */

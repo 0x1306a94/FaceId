@@ -5,8 +5,8 @@
 //  Created by king on 2024/2/4.
 //
 
-#ifndef application_orm_hpp
-#define application_orm_hpp
+#ifndef face_id_storage_application_orm_hpp
+#define face_id_storage_application_orm_hpp
 
 #ifdef __APPLE__
 #include <WCDBCpp/WCDBCpp.h>
@@ -16,13 +16,11 @@
 
 #include <cstdint>
 #include <string>
-#include <vector>
 
 namespace face {
 namespace storage {
 class ApplicationORM {
   public:
-    std::uint64_t identifier;
     std::string appId;
     std::string name;
     std::uint64_t createDate;
@@ -37,4 +35,4 @@ class ApplicationORM {
 }  // namespace storage
 };  // namespace face
 
-#endif /* application_orm_hpp */
+#endif /* face_id_storage_application_orm_hpp */

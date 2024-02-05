@@ -12,10 +12,14 @@
 #include <yaml-cpp/yaml.h>
 
 #include <argparse/argparse.hpp>
+#include <nlohmann/json.hpp>
 
 #include <memory>
+#include <strstream>
 
 int main(int argc, char *argv[]) {
+    // Disabling Internal Logging
+    spdlog::set_level(spdlog::level::off);
 
     auto printVersionFunc = [](const auto & /*unused*/) {
         std::cout << "verison: " << FACE_ID_CLI_VERSION << "\n"
@@ -28,6 +32,7 @@ int main(int argc, char *argv[]) {
     program.add_argument("-c", "--config")
         .required()
         .help("config file.");
+
     program.add_argument("-v", "--version")
         .action(printVersionFunc)
         .default_value(false)
@@ -35,12 +40,8 @@ int main(int argc, char *argv[]) {
         .implicit_value(true)
         .nargs(0);
 
-    argparse::ArgumentParser app_command("app", FACE_ID_CLI_VERSION, argparse::default_arguments::help);
-    app_command.add_description("application management.");
-
-    program.add_subparser(app_command);
-
-    argparse::ArgumentParser app_add_command("add", FACE_ID_CLI_VERSION, argparse::default_arguments::help);
+    argparse::ArgumentParser app_add_command("app_add", FACE_ID_CLI_VERSION, argparse::default_arguments::help);
+    app_add_command.add_description("add application");
     app_add_command.add_argument("--appid")
         .help("application id.")
         .required();
@@ -49,13 +50,18 @@ int main(int argc, char *argv[]) {
         .help("application name.")
         .required();
 
-    app_command.add_subparser(app_add_command);
+    argparse::ArgumentParser app_list_command("app_list", FACE_ID_CLI_VERSION, argparse::default_arguments::help);
+    app_list_command.add_argument("--count")
+        .default_value<std::int64_t>(10);
+
+    program.add_subparser(app_add_command);
+    program.add_subparser(app_list_command);
 
     try {
         program.parse_args(argc, argv);
     } catch (const std::exception &err) {
         std::cerr << program << std::endl;
-        SPDLOG_ERROR("{}", err.what());
+        std::cerr << err.what() << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -64,16 +70,15 @@ int main(int argc, char *argv[]) {
     YAML::Node node = YAML::LoadFile(conf);
     face::cli::MainConfig config;
     YAML::convert<face::cli::MainConfig>::decode(node, config);
-    //    std::cerr << node << std::endl;
 
     std::shared_ptr<face::storage::Storage> storage = nullptr;
     if (!config.storage.data_dir.empty()) {
         storage = std::make_shared<face::storage::Storage>(config.storage);
     }
 
-    if (program.is_subcommand_used(app_command) && app_command.is_subcommand_used(app_add_command)) {
+    if (program.is_subcommand_used(app_add_command)) {
         if (!storage) {
-            SPDLOG_ERROR("storage setup fail");
+            std::cerr << "storage setup fail" << std::endl;
             return EXIT_SUCCESS;
         }
         auto appid = app_add_command.get<std::string>("--appid");
@@ -81,12 +86,40 @@ int main(int argc, char *argv[]) {
         auto result = storage->AddApplication(appid, name);
         if (result.is_ok()) {
             auto appInfo = result.take_ok_value();
-            SPDLOG_INFO("add succes identifier: {}", appInfo.identifier);
+            nlohmann::json json{
+                {"appId", appInfo.appId},
+                {"name", appInfo.name},
+                {"createDate", appInfo.createDate},
+                {"updateDate", appInfo.updateDate},
+            };
+
+            std::cout << json.dump(4) << std::endl;
         } else {
             auto msg = result.take_err_value();
-            SPDLOG_ERROR("add fail msg: {}", msg);
+            std::cerr << "add fail msg: " << msg << std::endl;
         }
         return EXIT_SUCCESS;
+    }
+
+    if (program.is_subcommand_used(app_list_command)) {
+        if (!storage) {
+            std::cerr << "storage setup fail" << std::endl;
+            return EXIT_SUCCESS;
+        }
+
+        std::int64_t count = app_list_command.get<std::int64_t>("--count");
+        auto apps = storage->Applocations(count);
+        nlohmann::json json_list;
+        for (const auto &app : apps) {
+            json_list.emplace_back(nlohmann::json{
+                {"appId", app.appId},
+                {"name", app.name},
+                {"createDate", app.createDate},
+                {"updateDate", app.updateDate},
+            });
+        }
+
+        std::cout << json_list.dump(4) << std::endl;
     }
     return EXIT_SUCCESS;
 }
