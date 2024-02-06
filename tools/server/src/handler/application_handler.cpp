@@ -55,12 +55,7 @@ int Application::Add(const HttpContextPtr &ctx) {
         return SendFail(ctx, 400, msg);
     }
     auto appInfo = result.take_ok_value();
-    return SendSuccess(ctx, nlohmann::json{
-                                {"appId", appInfo.appId},
-                                {"name", appInfo.name},
-                                {"createDate", appInfo.createDate},
-                                {"updateDate", appInfo.updateDate},
-                            });
+    return SendSuccess(ctx, appInfo);
 }
 
 int Application::Info(const HttpContextPtr &ctx) {
@@ -75,13 +70,8 @@ int Application::Info(const HttpContextPtr &ctx) {
     auto storage = Context::Current()->GetStorage();
     auto existApp = storage->GetApplication(appId);
     if (existApp) {
-        auto &appInfo = existApp.value();
-        return SendSuccess(ctx, nlohmann::json{
-                                    {"appId", appInfo.appId},
-                                    {"name", appInfo.name},
-                                    {"createDate", appInfo.createDate},
-                                    {"updateDate", appInfo.updateDate},
-                                });
+        auto appInfo = existApp.value();
+        return SendSuccess(ctx, appInfo);
     }
     return SendSuccess(ctx, {});
 }
@@ -98,16 +88,7 @@ int Application::List(const HttpContextPtr &ctx) {
 
     auto storage = Context::Current()->GetStorage();
     auto apps = storage->GetApplications(count);
-    nlohmann::json json_list(nlohmann::json::array());
-    for (const auto &app : apps) {
-        json_list.emplace_back(nlohmann::json{
-            {"appId", app.appId},
-            {"name", app.name},
-            {"createDate", app.createDate},
-            {"updateDate", app.updateDate},
-        });
-    }
-    return SendSuccess(ctx, std::move(json_list));
+    return SendSuccess(ctx, apps);
 }
 };  // namespace handler
 };  // namespace server
