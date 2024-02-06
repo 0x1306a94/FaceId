@@ -35,8 +35,12 @@ class Storage {
     std::vector<float> QueryFeature(const std::string &userId);
 
     face::common::Result<Application, std::string> AddApplication(const std::string &appid, const std::string &name);
-    std::list<Application> GetApplications(std::int64_t limit = 0);
+    std::list<Application> GetApplications(std::int64_t limit = 10);
     std::optional<Application> GetApplication(const std::string &appid);
+
+    face::common::Result<User, std::string> AddUser(const std::string &appid, const std::string &userId, const std::string &userInfo);
+    std::list<User> GetUsers(std::int64_t limit = 10);
+    std::optional<User> GetUser(const std::string &appid, const std::string &userId);
 
     bool AddFaceRecord(const std::string &appId, const std::string &userId, const std::string &userInfo, const std::vector<float> &feature);
 

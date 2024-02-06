@@ -15,6 +15,8 @@
 #include "./orm/user_orm.hpp"
 
 #include "application.hpp"
+#include "face_record.hpp"
+#include "user.hpp"
 
 #include "../common/src/date_util.hpp"
 
@@ -203,7 +205,7 @@ class Storage::Implement {
             return face::common::Err<std::string>("name null");
         }
 
-        if (appid.length() > 48) {
+        if (name.length() > 48) {
             return face::common::Err<std::string>("name cannot exceed 48 characters");
         }
 
@@ -271,7 +273,99 @@ class Storage::Implement {
         return std::nullopt;
     }
 
-    bool AddFaceRecord(const std::string &appId, const std::string &userId, const std::string &userInfo, const std::vector<float> &feature) {
+    face::common::Result<User, std::string> AddUser(const std::string &appid, const std::string &userId, const std::string &userInfo) {
+        if (appid.empty()) {
+            return face::common::Err<std::string>("appid null");
+        }
+
+        if (appid.length() > 32) {
+            return face::common::Err<std::string>("appid cannot exceed 32 characters");
+        }
+
+        if (userId.empty()) {
+            SPDLOG_ERROR("name null");
+            return face::common::Err<std::string>("userId null");
+        }
+
+        if (userId.length() > 32) {
+            return face::common::Err<std::string>("userId cannot exceed 48 characters");
+        }
+
+        if (userInfo.length() > 256) {
+            return face::common::Err<std::string>("userInfo cannot exceed 256 characters");
+        }
+
+        auto app = this->GetApplication(appid);
+        if (!app) {
+            return face::common::Err<std::string>("Create an application first");
+        }
+
+        auto select = this->m_db->prepareSelect<UserORM>()
+                          .onResultFields(UserORM::allFields())
+                          .fromTable(UserORM::TableName())
+                          .where(WCDB_FIELD(UserORM::appId) == appid && WCDB_FIELD(UserORM::userId) == userId)
+                          .limit(1);
+        auto record = select.firstObject();
+        if (record.succeed()) {
+            return face::common::Err<std::string>("the userId already exists");
+        }
+
+        UserORM userOrm(appid, userId, userInfo);
+        userOrm.createDate = common::date_util::CurrentMilliTimestamp();
+        userOrm.updateDate = common::date_util::CurrentMilliTimestamp();
+
+        auto fields = {
+            WCDB_FIELD(UserORM::appId),
+            WCDB_FIELD(UserORM::userId),
+            WCDB_FIELD(UserORM::userInfo),
+            WCDB_FIELD(UserORM::createDate),
+            WCDB_FIELD(UserORM::updateDate),
+        };
+
+        if (this->m_db->insertObjects<UserORM>(userOrm, UserORM::TableName(), fields)) {
+            User userInfo(userOrm);
+            return face::common::Ok<User>(userInfo);
+        }
+
+        return face::common::Err<std::string>("data write failure");
+    }
+
+    std::list<User> GetUsers(std::int64_t limit = 10) {
+        auto select = this->m_db->prepareSelect<UserORM>()
+                          .onResultFields(UserORM::allFields())
+                          .fromTable(UserORM::TableName())
+                          .orders(WCDB_FIELD(UserORM::createDate).asOrder(WCDB::Order::DESC));
+
+        if (limit > 0) {
+            select.limit(limit);
+        }
+
+        std::list<User> results;
+        auto objects = select.allObjects();
+        if (objects.failed()) {
+            return results;
+        }
+        for (const auto &obj : objects.value()) {
+            results.emplace_back(obj);
+        }
+        return results;
+    }
+
+    std::optional<User> GetUser(const std::string &appid, const std::string &userId) {
+        auto select = this->m_db->prepareSelect<UserORM>()
+                          .onResultFields(UserORM::allFields())
+                          .fromTable(UserORM::TableName())
+                          .where(WCDB_FIELD(UserORM::appId) == appid && WCDB_FIELD(UserORM::userId) == userId)
+                          .limit(1);
+
+        auto result = select.firstObject();
+        if (result.succeed()) {
+            return std::make_optional<User>(result.value());
+        }
+        return std::nullopt;
+    }
+
+    bool AddFaceRecord(const std::string &appId, const std::string &userId, const std::optional<std::string> &userInfo, const std::vector<float> &feature) {
         auto app = this->GetApplication(appId);
         if (!app) {
             SPDLOG_ERROR("corresponding appid application does not exist: {}", appId);
@@ -292,7 +386,7 @@ class Storage::Implement {
             }
 
             auto ts = common::date_util::CurrentMilliTimestamp();
-            UserORM user(appId, userId, userInfo);
+            UserORM user(appId, userId, userInfo.value_or(std::string()));
             user.createDate = ts;
             user.updateDate = ts;
             if (existUser.failed()) {
@@ -348,6 +442,18 @@ std::list<Application> Storage::GetApplications(std::int64_t limit) {
 
 std::optional<Application> Storage::GetApplication(const std::string &appid) {
     return this->m_impl->GetApplication(appid);
+}
+
+face::common::Result<User, std::string> Storage::AddUser(const std::string &appid, const std::string &userId, const std::string &userInfo) {
+    return this->m_impl->AddUser(appid, userId, userInfo);
+}
+
+std::list<User> Storage::GetUsers(std::int64_t limit) {
+    return this->m_impl->GetUsers(limit);
+}
+
+std::optional<User> Storage::GetUser(const std::string &appid, const std::string &userId) {
+    return this->m_impl->GetUser(appid, userId);
 }
 
 bool Storage::AddFaceRecord(const std::string &appId, const std::string &userId, const std::string &userInfo, const std::vector<float> &feature) {
