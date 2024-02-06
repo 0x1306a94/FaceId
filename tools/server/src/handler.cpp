@@ -9,6 +9,7 @@
 
 #include "../common/src/AutoBuffer.hpp"
 #include "../common/src/base64.hpp"
+#include "../common/src/byte_order.hpp"
 #include "../common/src/util.hpp"
 #include "../recognizer/src/FeatureEngine.hpp"
 #include "../recognizer/src/FeatureEnginePool.hpp"
@@ -390,7 +391,7 @@ int Handler::queryFeature(const HttpContextPtr &ctx) {
             std::vector<float> big_feature(FeatureLenght);
             for (size_t i = 0; i < FeatureLenght; i++) {
                 float f = feature[i];
-                big_feature[i] = common::utils::float_little_to_big(f);
+                big_feature[i] = common::float_little_to_big(f);
             }
             std::string content(reinterpret_cast<const char *>(big_feature.data()), (sizeof(float) * big_feature.size()));
             std::string base64_str = common::base64::to_base64(content);
@@ -433,7 +434,7 @@ int Handler::batchQueryFeature(const HttpContextPtr &ctx) {
                 std::vector<float> big_feature(FeatureLenght);
                 for (size_t i = 0; i < FeatureLenght; i++) {
                     float f = feature[i];
-                    big_feature[i] = common::utils::float_little_to_big(f);
+                    big_feature[i] = common::float_little_to_big(f);
                 }
                 std::string content(reinterpret_cast<const char *>(big_feature.data()), (sizeof(float) * big_feature.size()));
                 std::string base64_str = common::base64::to_base64(content);

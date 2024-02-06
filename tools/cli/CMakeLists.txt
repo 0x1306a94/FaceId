@@ -50,6 +50,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
   XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO"
   XCODE_ATTRIBUTE_CODE_SIGN_STYLE "Manual"
 )
+elseif(UNIX)
+  target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS})
 endif()
 
 install(TARGETS ${PROJECT_NAME}

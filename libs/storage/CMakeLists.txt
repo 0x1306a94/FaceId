@@ -59,6 +59,7 @@ install(FILES ${WCDB_LIB} DESTINATION lib)
 endif()
 
 if(NOT APPLE)
+  target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS})
   target_compile_options(${PROJECT_NAME} PRIVATE  -Wno-unknown-pragmas -Wno-pragmas -Wno-deprecated -Wno-unused-variable -fpermissive)
 endif()
 

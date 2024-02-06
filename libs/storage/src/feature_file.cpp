@@ -118,9 +118,18 @@ class FeatureFile::Implement {
         return count >= FACE_FEATURE_FILE_MAX_ITEM;
     }
 
+    bool IsValid() const {
+        std::shared_lock<std::shared_mutex> lck(m_mutex);
+        if (m_header == nullptr) {
+            return false;
+        }
+        return true;
+    }
+
     std::optional<std::uint32_t> AddFeature(const std::vector<float> &feature) {
         std::unique_lock<std::shared_mutex> lck(m_mutex);
         if (m_header == nullptr) {
+            SPDLOG_ERROR("feature file does not exist path: {}", m_path.string());
             return std::nullopt;
         }
 
@@ -135,7 +144,7 @@ class FeatureFile::Implement {
         if (hostOrder == common::ByteOrder::BIG) {
             size_t index = 0;
             for (const auto &value : feature) {
-                temp[index++] = common::float_little_to_big(value);
+                temp[index++] = common::float_big_to_little(value);
                 if (index >= FACE_FEATURE_LENGHT) {
                     break;
                 }
@@ -148,7 +157,7 @@ class FeatureFile::Implement {
         m_header->count = count + 1;
         FeatureItem *addItem = m_item + count;
         memcpy(addItem->value, temp, sizeof(temp));
-        return count;
+        return std::make_optional<std::uint32_t>(count);
     }
 
     std::optional<std::vector<float>> GetFeature(std::uint32_t offset) {
@@ -167,10 +176,10 @@ class FeatureFile::Implement {
         auto hostOrder = common::NativeOrder();
         if (hostOrder == common::ByteOrder::BIG) {
             for (size_t idx = 0; idx < FACE_FEATURE_LENGHT; idx++) {
-                result[idx] = common::float_big_to_little(result[idx]);
+                result[idx] = common::float_little_to_big(result[idx]);
             }
         }
-        return result;
+        return std::make_optional<std::vector<float>>(std::move(result));
     }
 };
 
@@ -191,6 +200,10 @@ std::uint16_t FeatureFile::GetIndex() const {
 
 bool FeatureFile::IsFull() const {
     return impl->IsFull();
+}
+
+bool FeatureFile::IsValid() const {
+    return impl->IsValid();
 }
 
 std::optional<std::uint32_t> FeatureFile::AddFeature(const std::vector<float> &feature) {

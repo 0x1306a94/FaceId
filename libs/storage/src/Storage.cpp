@@ -57,25 +57,25 @@ class Storage::Implement {
         , m_featureDir(config.data_dir + "/feature")
         , m_db(nullptr) {
 
-        if (!fs::exists(m_dbDir)) {
-            fs::create_directories(m_dbDir);
+        if (!fs::exists(this->m_dbDir)) {
+            fs::create_directories(this->m_dbDir);
         }
-        if (!fs::exists(m_featureDir)) {
-            fs::create_directories(m_featureDir);
+        if (!fs::exists(this->m_featureDir)) {
+            fs::create_directories(this->m_featureDir);
         }
-        auto dbPath(m_dbDir);
+        auto dbPath(this->m_dbDir);
         dbPath.append("metadata.db");
         this->m_db = std::make_shared<WCDB::Database>(dbPath.string());
         auto create = WCDB::StatementCreateTable();
         SPDLOG_INFO("db path: {}", dbPath.string());
 #ifndef NDEBUG
         this->m_db->traceSQL([](long tag, const WCDB::UnsafeStringView &path, const WCDB::UnsafeStringView &sql, const void *handleIdentifier) {
-            SPDLOG_INFO("sql: {}", sql.data());
+            SPDLOG_TRACE("sql: {}", sql.data());
         });
 #endif
 
         this->m_db->traceError([](const WCDB::Error &error) {
-            if (!error.isOK()) {
+            if (!error.isOK() && error.level != WCDB::Error::Level::Ignore) {
                 SPDLOG_ERROR("{}", error.getMessage().data());
             }
         });
@@ -97,19 +97,59 @@ class Storage::Implement {
         } else {
             SPDLOG_ERROR("createTable fail: {}", FaceRecordORM::TableName());
         }
+
+        this->LoadFeatureFiles();
+    }
+
+    void LoadFeatureFiles() {
+        auto iter = fs::directory_iterator(this->m_featureDir);
+        for (const auto &entry : iter) {
+            if (!fs::is_regular_file(entry.path())) {
+                continue;
+            }
+            auto filePath = entry.path();
+            auto filename = filePath.filename().string();
+
+            size_t underscore_pos = filename.find('_');
+            if (underscore_pos == std::string::npos) {
+                SPDLOG_ERROR("file name format is incorrect: {}", filePath.string());
+                return 1;
+            }
+            std::string appid_str = filename.substr(0, underscore_pos);
+            std::string index_str = filename.substr(underscore_pos + 1);
+            std::uint16_t index = 0;
+            try {
+                index = static_cast<std::uint16_t>(std::stoul(index_str));
+            } catch (std::exception &e) {
+                SPDLOG_ERROR("{}", e.what());
+                continue;
+            }
+
+            auto featureFile = std::make_shared<FeatureFile>(appid_str, index, this->m_featureDir.string());
+            if (!featureFile->IsValid()) {
+                continue;
+            }
+            if (auto value = this->m_featureFiles.find(appid_str); value != this->m_featureFiles.end()) {
+                value->second.push_back(featureFile);
+            } else {
+                std::vector<std::shared_ptr<FeatureFile>> files;
+                files.push_back(featureFile);
+                this->m_featureFiles.emplace(appid_str, std::move(files));
+            }
+        }
     }
 
     std::shared_ptr<FeatureFile> GetFeatureFile(const std::string &appid) {
         if (appid.empty()) {
             return nullptr;
         }
-        std::lock_guard<std::mutex> lock(m_mutex);
-        auto iter = m_featureFiles.find(appid);
-        if (iter == m_featureFiles.end()) {
-            auto file = std::make_shared<FeatureFile>(appid, 0, m_featureDir.string());
+        std::lock_guard<std::mutex> lock(this->m_mutex);
+        auto iter = this->m_featureFiles.find(appid);
+        if (iter == this->m_featureFiles.end()) {
+            auto file = std::make_shared<FeatureFile>(appid, 0, this->m_featureDir.string());
             std::vector<std::shared_ptr<FeatureFile>> files;
             files.push_back(file);
-            m_featureFiles.emplace(appid, std::move(files));
+            this->m_featureFiles.emplace(appid, std::move(files));
             return file;
         }
         auto &files = iter->second;
@@ -122,7 +162,7 @@ class Storage::Implement {
             index = std::max(index, fileIndex);
         }
 
-        auto file = std::make_shared<FeatureFile>(appid, index + 1, m_featureDir.string());
+        auto file = std::make_shared<FeatureFile>(appid, index + 1, this->m_featureDir.string());
         files.push_back(file);
         return file;
     }
@@ -194,7 +234,7 @@ class Storage::Implement {
         return face::common::Err<std::string>("data write failure");
     }
 
-    std::list<Application> Applocations(std::int64_t limit = 0) {
+    std::list<Application> GetApplications(std::int64_t limit = 0) {
         auto select = this->m_db->prepareSelect<ApplicationORM>()
                           .onResultFields(ApplicationORM::allFields())
                           .fromTable(ApplicationORM::TableName())
@@ -215,8 +255,28 @@ class Storage::Implement {
         return results;
     }
 
+    std::optional<Application> GetApplication(const std::string &appid) {
+        auto select = this->m_db->prepareSelect<ApplicationORM>()
+                          .onResultFields(ApplicationORM::allFields())
+                          .fromTable(ApplicationORM::TableName())
+                          .where(WCDB_FIELD(ApplicationORM::appId) == appid)
+                          .limit(1);
+
+        auto result = select.firstObject();
+        if (result.succeed()) {
+            return std::make_optional<Application>(result.value());
+        }
+        return std::nullopt;
+    }
+
     bool AddFaceRecord(const std::string &appId, const std::string &userId, const std::string &userInfo, const std::vector<float> &feature) {
-        auto featureFile = GetFeatureFile(appId);
+        auto app = this->GetApplication(appId);
+        if (!app) {
+            SPDLOG_ERROR("corresponding appid application does not exist: {}", appId);
+            return false;
+        }
+
+        auto featureFile = this->GetFeatureFile(appId);
         if (!featureFile) {
             return false;
         }
@@ -225,6 +285,7 @@ class Storage::Implement {
             auto existUser = handler.getFirstObject<UserORM>(UserORM::TableName(), {WCDB_FIELD(UserORM::appId) == appId && WCDB_FIELD(UserORM::userId) == userId});
             auto write = featureFile->AddFeature(feature);
             if (!write.has_value()) {
+
                 return false;
             }
 
@@ -272,19 +333,23 @@ Storage::~Storage() {
 }
 
 std::vector<float> Storage::QueryFeature(const std::string &userId) {
-    return m_impl->QueryFeature(userId);
+    return this->m_impl->QueryFeature(userId);
 }
 
 face::common::Result<Application, std::string> Storage::AddApplication(const std::string &appid, const std::string &name) {
-    return m_impl->AddApplication(appid, name);
+    return this->m_impl->AddApplication(appid, name);
 }
 
-std::list<Application> Storage::Applocations(std::int64_t limit) {
-    return m_impl->Applocations(limit);
+std::list<Application> Storage::GetApplications(std::int64_t limit) {
+    return this->m_impl->GetApplications(limit);
+}
+
+std::optional<Application> Storage::GetApplication(const std::string &appid) {
+    return this->m_impl->GetApplication(appid);
 }
 
 bool Storage::AddFaceRecord(const std::string &appId, const std::string &userId, const std::string &userInfo, const std::vector<float> &feature) {
-    return m_impl->AddFaceRecord(appId, userId, userInfo, feature);
+    return this->m_impl->AddFaceRecord(appId, userId, userInfo, feature);
 }
 }  // namespace storage
 }  // namespace face

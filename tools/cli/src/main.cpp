@@ -31,7 +31,7 @@ std::vector<float> GenTestFeature(void) {
 
 int main(int argc, char *argv[]) {
     // Disabling Internal Logging
-    spdlog::set_level(spdlog::level::off);
+    //    spdlog::set_level(spdlog::level::off);
 
     auto printVersionFunc = [](const auto & /*unused*/) {
         std::cout << "verison: " << FACE_ID_CLI_VERSION << "\n"
@@ -41,9 +41,18 @@ int main(int argc, char *argv[]) {
     };
 
     argparse::ArgumentParser program("face_id_cli", FACE_ID_CLI_VERSION, argparse::default_arguments::help);
+
     program.add_argument("-c", "--config")
         .required()
         .help("config file.");
+
+    int verbosity = -1;
+    program.add_argument("-V", "--verbose")
+        .action([&](const auto &) { ++verbosity; })
+        .append()
+        .default_value(false)
+        .implicit_value(true)
+        .nargs(0);
 
     program.add_argument("-v", "--version")
         .action(printVersionFunc)
@@ -97,6 +106,12 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+    if (verbosity < 0) {
+        spdlog::set_level(spdlog::level::err);
+    } else {
+        spdlog::set_level(static_cast<spdlog::level::level_enum>(verbosity));
+    }
+
     auto conf = program.get<std::string>("--config");
 
     YAML::Node node = YAML::LoadFile(conf);
@@ -109,8 +124,8 @@ int main(int argc, char *argv[]) {
     }
 
     if (!storage) {
-        std::cerr << "storage setup fail" << std::endl;
-        return EXIT_SUCCESS;
+        SPDLOG_ERROR("storage setup fail");
+        return EXIT_FAILURE;
     }
 
     //
@@ -143,7 +158,8 @@ int main(int argc, char *argv[]) {
             std::cout << json.dump(4) << std::endl;
         } else {
             auto msg = result.take_err_value();
-            std::cerr << "add fail msg: " << msg << std::endl;
+            SPDLOG_ERROR("add fail msg: {}", msg);
+            return EXIT_FAILURE;
         }
         return EXIT_SUCCESS;
     }
@@ -151,7 +167,7 @@ int main(int argc, char *argv[]) {
     if (program.is_subcommand_used(app_list_command)) {
 
         std::int64_t count = app_list_command.get<std::int64_t>("--count");
-        auto apps = storage->Applocations(count);
+        auto apps = storage->GetApplications(count);
         nlohmann::json json_list;
         for (const auto &app : apps) {
             json_list.emplace_back(nlohmann::json{
@@ -169,13 +185,19 @@ int main(int argc, char *argv[]) {
         auto appid = gen_test_command.get<std::string>("--appid");
         auto start = gen_test_command.get<std::int64_t>("--start");
         auto count = gen_test_command.get<std::int64_t>("--count");
+
+        auto existApp = storage->GetApplication(appid);
+        if (!existApp) {
+            SPDLOG_ERROR("corresponding appid application does not exist: {}", appid);
+            return EXIT_FAILURE;
+        }
         for (size_t idx = 0; idx < count; idx++) {
             auto feature = GenTestFeature();
             auto userid = std::to_string(start + idx);
             auto added = storage->AddFaceRecord(appid, userid, "", feature);
             if (!added) {
-                std::cerr << "add failure userid: " << userid << std::endl;
-                return EXIT_SUCCESS;
+                SPDLOG_ERROR("add failure userid: {}", userid);
+                return EXIT_FAILURE;
             }
         }
         return EXIT_SUCCESS;
