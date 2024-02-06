@@ -8,6 +8,7 @@
 #include "./handler/common_handler.hpp"
 
 #include "./handler/application_handler.hpp"
+#include "./handler/user_handler.hpp"
 
 #include <hv/HttpService.h>
 
@@ -32,6 +33,10 @@ void Router::Register(hv::HttpService &service) {
     service.POST("/v1/app/add", handler::Application::Add);
     service.POST("/v1/app/info", handler::Application::Info);
     service.POST("/v1/app/list", handler::Application::List);
+    
+    service.POST("/v1/user/add", handler::User::Add);
+    service.POST("/v1/user/info", handler::User::Info);
+    service.POST("/v1/user/list", handler::User::List);
 
     service.POST("/extract_file", Handler::extractFeatureFromFile);
     service.POST("/extract_base64", Handler::extractFeatureFromBase64);
