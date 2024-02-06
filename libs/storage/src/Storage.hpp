@@ -42,7 +42,8 @@ class Storage {
     std::list<User> GetUsers(std::int64_t limit = 10);
     std::optional<User> GetUser(const std::string &appid, const std::string &userId);
 
-    bool AddFaceRecord(const std::string &appId, const std::string &userId, const std::string &userInfo, const std::vector<float> &feature);
+    std::optional<FaceRecord> AddFaceRecord(const std::string &appId, const std::string &userId, const std::string &userInfo, const std::vector<float> &feature);
+    std::list<FaceRecord> GetFaceRecords(const std::string &appId, const std::string &userId, std::int64_t limit = 10);
 
   private:
     class Implement;

@@ -25,7 +25,7 @@ namespace server {
 namespace handler {
 int SendSuccess(const HttpContextPtr &ctx);
 int SendSuccess(const HttpContextPtr &ctx, nlohmann::json result);
-int SendFail(const HttpContextPtr &ctx, size_t code, const std::string &msg);
+int SendFail(const HttpContextPtr &ctx, long code, const std::string &msg);
 
 template <typename T>
 int SendSuccess(const HttpContextPtr &ctx, const T &value) {

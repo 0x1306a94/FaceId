@@ -238,7 +238,7 @@ class Storage::Implement {
         return face::common::Err<std::string>("data write failure");
     }
 
-    std::list<Application> GetApplications(std::int64_t limit = 0) {
+    std::list<Application> GetApplications(std::int64_t limit) {
         auto select = this->m_db->prepareSelect<ApplicationORM>()
                           .onResultFields(ApplicationORM::allFields())
                           .fromTable(ApplicationORM::TableName())
@@ -330,7 +330,7 @@ class Storage::Implement {
         return face::common::Err<std::string>("data write failure");
     }
 
-    std::list<User> GetUsers(std::int64_t limit = 10) {
+    std::list<User> GetUsers(std::int64_t limit) {
         auto select = this->m_db->prepareSelect<UserORM>()
                           .onResultFields(UserORM::allFields())
                           .fromTable(UserORM::TableName())
@@ -365,19 +365,20 @@ class Storage::Implement {
         return std::nullopt;
     }
 
-    bool AddFaceRecord(const std::string &appId, const std::string &userId, const std::optional<std::string> &userInfo, const std::vector<float> &feature) {
+    std::optional<FaceRecord> AddFaceRecord(const std::string &appId, const std::string &userId, const std::optional<std::string> &userInfo, const std::vector<float> &feature) {
         auto app = this->GetApplication(appId);
         if (!app) {
             SPDLOG_ERROR("corresponding appid application does not exist: {}", appId);
-            return false;
+            return std::nullopt;
         }
 
         auto featureFile = this->GetFeatureFile(appId);
         if (!featureFile) {
-            return false;
+            return std::nullopt;
         }
 
-        return this->m_db->runTransaction([&](WCDB::Handle &handler) -> bool {
+        std::optional<FaceRecord> result = std::nullopt;
+        auto res = this->m_db->runTransaction([&](WCDB::Handle &handler) -> bool {
             auto existUser = handler.getFirstObject<UserORM>(UserORM::TableName(), {WCDB_FIELD(UserORM::appId) == appId && WCDB_FIELD(UserORM::userId) == userId});
             auto write = featureFile->AddFeature(feature);
             if (!write.has_value()) {
@@ -416,8 +417,39 @@ class Storage::Implement {
                 WCDB_FIELD(FaceRecordORM::updateDate),
             };
             auto res = handler.insertObjects<FaceRecordORM>(face, FaceRecordORM::TableName(), fields);
+
+            result = std::make_optional<FaceRecord>(face);
             return res;
         });
+
+        return result;
+    }
+
+    std::list<FaceRecord> GetFaceRecords(const std::string &appId, const std::string &userId, std::int64_t limit) {
+        auto select = this->m_db->prepareSelect<FaceRecordORM>()
+                          .onResultFields(FaceRecordORM::allFields())
+                          .fromTable(FaceRecordORM::TableName());
+
+        if (userId.empty()) {
+            select.where(WCDB_FIELD(FaceRecordORM::appId) == appId);
+        } else {
+            select.where(WCDB_FIELD(FaceRecordORM::appId) == appId && WCDB_FIELD(FaceRecordORM::userId) == userId);
+        }
+
+        select.orders(WCDB_FIELD(FaceRecordORM::createDate).asOrder(WCDB::Order::DESC));
+        if (limit > 0) {
+            select.limit(limit);
+        }
+
+        std::list<FaceRecord> results;
+        auto objects = select.allObjects();
+        if (objects.failed()) {
+            return results;
+        }
+        for (const auto &obj : objects.value()) {
+            results.emplace_back(obj);
+        }
+        return results;
     }
 };
 
@@ -456,8 +488,12 @@ std::optional<User> Storage::GetUser(const std::string &appid, const std::string
     return this->m_impl->GetUser(appid, userId);
 }
 
-bool Storage::AddFaceRecord(const std::string &appId, const std::string &userId, const std::string &userInfo, const std::vector<float> &feature) {
+std::optional<FaceRecord> Storage::AddFaceRecord(const std::string &appId, const std::string &userId, const std::string &userInfo, const std::vector<float> &feature) {
     return this->m_impl->AddFaceRecord(appId, userId, userInfo, feature);
+}
+
+std::list<FaceRecord> Storage::GetFaceRecords(const std::string &appId, const std::string &userId, std::int64_t limit) {
+    return this->m_impl->GetFaceRecords(appId, userId, limit);
 }
 }  // namespace storage
 }  // namespace face

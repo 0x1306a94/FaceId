@@ -20,8 +20,12 @@ typedef std::shared_ptr<hv::HttpContext> HttpContextPtr;
 namespace face {
 namespace server {
 namespace handler {
-
+struct Face {
+    static int Add(const HttpContextPtr &ctx);
+    static int Info(const HttpContextPtr &ctx);
+    static int List(const HttpContextPtr &ctx);
 };
+};  // namespace handler
 };  // namespace server
 };  // namespace face
 

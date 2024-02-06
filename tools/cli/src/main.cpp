@@ -5,6 +5,8 @@
 
 #include "../storage/src/Storage.hpp"
 #include "../storage/src/application.hpp"
+#include "../storage/src/face_record.hpp"
+#include "../storage/src/user.hpp"
 
 #include "../common/src/csv.hpp"
 

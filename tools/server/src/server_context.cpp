@@ -7,6 +7,7 @@
 
 #include "config.hpp"
 
+#include "../recognizer/src/FeatureEnginePool.hpp"
 #include "../storage/src/Storage.hpp"
 
 #include "server_context.hpp"
@@ -14,21 +15,38 @@
 namespace face {
 namespace server {
 static Context *g_context = nullptr;
-Context::Context(MainConfig config)
-    : config(std::make_shared<MainConfig>(config)) {
+Context::Context(std::shared_ptr<MainConfig> config, std::shared_ptr<storage::Storage> storage, std::shared_ptr<recognizer::FeatureEnginePool> enginePool)
+    : m_config(config)
+    , m_storage(storage)
+    , m_enginePool(enginePool) {
 }
 
 void Context::Init(MainConfig config) {
-    g_context = new Context(config);
-    g_context->m_storage = std::make_shared<storage::Storage>(config.storage);
+    auto configPtr = std::make_shared<MainConfig>(config);
+    auto storagePtr = std::make_shared<storage::Storage>(config.storage);
+
+    const auto &recognizerConf = configPtr->recognizer;
+    auto pool_size = recognizerConf.engine_pool_szie;
+    auto model_dir = recognizerConf.face_model_dir;
+
+    auto enginePoolPtr = std::make_shared<face::recognizer::FeatureEnginePool>(pool_size, model_dir);
+    g_context = new Context(configPtr, storagePtr, enginePoolPtr);
 }
 
 Context *Context::Current() {
     return g_context;
 }
 
+std::shared_ptr<MainConfig> Context::GetConfig() {
+    return m_config;
+}
+
 std::shared_ptr<storage::Storage> Context::GetStorage() {
     return m_storage;
+}
+
+std::shared_ptr<recognizer::FeatureEnginePool> Context::GetEnginePool() {
+    return m_enginePool;
 }
 
 };  // namespace server

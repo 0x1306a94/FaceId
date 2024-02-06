@@ -27,7 +27,7 @@ int SendSuccess(const HttpContextPtr &ctx, nlohmann::json result) {
     return ctx->send(json.dump());
 }
 
-int SendFail(const HttpContextPtr &ctx, size_t code, const std::string &msg) {
+int SendFail(const HttpContextPtr &ctx, long code, const std::string &msg) {
     nlohmann::json json;
     json["code"] = code;
     json["msg"] = msg;
