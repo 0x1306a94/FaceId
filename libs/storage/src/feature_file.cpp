@@ -177,7 +177,7 @@ class FeatureFile::Implement {
 
         WriteCount(count + 1);
         FeatureItem *addItem = m_item + count;
-        memcpy(addItem->value, temp, sizeof(temp));
+        memcpy(addItem->value, static_cast<void *>(temp), sizeof(temp));
         return std::make_optional<std::uint32_t>(count);
     }
 
