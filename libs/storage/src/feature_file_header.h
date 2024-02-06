@@ -10,10 +10,9 @@
 
 #define FACE_FEATURE_LENGHT 1024
 #define FACE_FEATURE_FILE_MAX_ITEM 100000
-/// big endian
-#define FACE_FEATURE_FILE_MAGIC 0x46414345
-/// little endian
-#define FACE_FEATURE_FILE_CIGAM 0x45434146
+
+#define FACE_FEATURE_FILE_MAGIC 0x46414345 /* the mach magic number */
+#define FACE_FEATURE_FILE_CIGAM 0x45434146 /* swap(FACE_FEATURE_FILE_MAGIC) */
 
 #pragma pack(push, 1)
 struct FeatureItem {

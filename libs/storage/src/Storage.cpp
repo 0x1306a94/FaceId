@@ -109,7 +109,9 @@ class Storage::Implement {
             }
             auto filePath = entry.path();
             auto filename = filePath.filename().string();
-
+            if (!filename.empty() && filename.at(0) == '.') {
+                continue;
+            }
             size_t underscore_pos = filename.find('_');
             if (underscore_pos == std::string::npos) {
                 SPDLOG_ERROR("file name format is incorrect: {}", filePath.string());
