@@ -142,7 +142,7 @@ int main(int argc, char *argv[]) {
         program.parse_args(argc, argv);
     } catch (const std::exception &err) {
         std::cerr << program << std::endl;
-        SPDLOG_ERROR("{}", err.what());
+        std::cerr << err.what() << std::endl;
         return EXIT_FAILURE;
     }
 

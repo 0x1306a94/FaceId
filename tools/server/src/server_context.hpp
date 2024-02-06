@@ -5,10 +5,11 @@
 //  Created by king on 2024/2/2.
 //
 
-#ifndef server_context_hpp
-#define server_context_hpp
+#ifndef face_id_server_server_context_hpp
+#define face_id_server_server_context_hpp
 
 #include "noncopyable.hpp"
+
 #include <memory>
 
 namespace face {
@@ -22,7 +23,7 @@ struct MainConfig;
 class Context {
   public:
     FACE_MAKE_NONCOPYABLE(Context);
-    MainConfig config;
+    std::shared_ptr<MainConfig> config;
 
     explicit Context(MainConfig config);
     static void Init(MainConfig config);
@@ -34,4 +35,4 @@ class Context {
 };
 };     // namespace server
 };     // namespace face
-#endif /* server_context_hpp */
+#endif /* face_id_server_server_context_hpp */

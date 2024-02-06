@@ -5,8 +5,8 @@
 //  Created by king on 2024/1/17.
 //
 
-#ifndef SimilarityCalculation_hpp
-#define SimilarityCalculation_hpp
+#ifndef face_id_server_SimilarityCalculation_hpp
+#define face_id_server_SimilarityCalculation_hpp
 
 #include <cstddef>
 

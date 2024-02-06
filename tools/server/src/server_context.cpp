@@ -15,7 +15,7 @@ namespace face {
 namespace server {
 static Context *g_context = nullptr;
 Context::Context(MainConfig config)
-    : config(config) {
+    : config(std::make_shared<MainConfig>(config)) {
 }
 
 void Context::Init(MainConfig config) {

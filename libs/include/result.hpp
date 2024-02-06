@@ -1,6 +1,6 @@
 
-#ifndef __Result_hpp__
-#define __Result_hpp__
+#ifndef __face_id_common_Result_hpp__
+#define __face_id_common_Result_hpp__
 
 #include <type_traits>
 #include <variant>
@@ -52,4 +52,4 @@ class Result {
 };
 }  // namespace common
 }  // namespace face
-#endif
+#endif /* __face_id_common_Result_hpp__ */

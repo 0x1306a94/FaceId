@@ -1,5 +1,5 @@
-#ifndef __handler_hpp__
-#define __handler_hpp__
+#ifndef __face_id_server_handler_hpp__
+#define __face_id_server_handler_hpp__
 
 #include <functional>
 #include <memory>

@@ -1,6 +1,6 @@
 
-#ifndef __router_hpp__
-#define __router_hpp__
+#ifndef __face_id_server_router_hpp__
+#define __face_id_server_router_hpp__
 
 #include <string>
 

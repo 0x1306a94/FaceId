@@ -20,8 +20,17 @@ message(STATUS "HV_LIB: ${HV_LIB}")
 configure_file(${CMAKE_CURRENT_LIST_DIR}/face_id_server.service.in ${CMAKE_INSTALL_PREFIX}/service/face_id_server.service @ONLY)
 configure_file(${CMAKE_CURRENT_LIST_DIR}/version.hpp.in autogen/include/${PROJECT_NAME}/version.hpp @ONLY)
 
-file(GLOB SELF_SRCS src/*.hpp src/*.cpp)
-add_executable(${PROJECT_NAME} ${SELF_SRCS})
+if(APPLE)
+  set(FILE_GLOB_OPTION RELATIVE)
+endif()
+
+file(GLOB SRC_SRCS src/*.h src/*.hpp src/*.cpp)
+file(GLOB HANDLER_SRCS src/handler/*.hpp src/handler/*.cpp)
+
+source_group(src FILES ${SRC_SRCS})
+source_group(handler FILES ${HANDLER_SRCS})
+
+add_executable(${PROJECT_NAME} ${SRC_SRCS} ${HANDLER_SRCS})
 target_include_directories(${PROJECT_NAME} PRIVATE 
 ./src
 ${FACE_ID_ROOT_DIR}/libs/common/src
