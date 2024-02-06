@@ -11,6 +11,10 @@ message(STATUS "Configuration: ${PROJECT_NAME}")
 file(GLOB SELF_SRCS src/*.hpp src/*.cpp)
 add_library(${PROJECT_NAME} SHARED ${SELF_SRCS})
 target_include_directories(${PROJECT_NAME} PRIVATE ./src)
+if(APPLE)
+    target_link_libraries(${PROJECT_NAME} PRIVATE "-framework CoreFoundation")
+endif()
+
 
 install(TARGETS ${PROJECT_NAME}
 LIBRARY DESTINATION lib

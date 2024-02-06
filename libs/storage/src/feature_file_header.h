@@ -9,6 +9,7 @@
 #define face_id_storage_feature_file_header_h
 
 #define FACE_FEATURE_LENGHT 1024
+#define FACE_FEATURE_SIZE 4096
 #define FACE_FEATURE_FILE_MAX_ITEM 100000
 
 #define FACE_FEATURE_FILE_MAGIC 0x46414345 /* the mach magic number */
@@ -16,7 +17,7 @@
 
 #pragma pack(push, 1)
 struct FeatureItem {
-    float value[FACE_FEATURE_LENGHT];
+    char value[FACE_FEATURE_SIZE];
 };
 
 struct FeatureFileHeader {

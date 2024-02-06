@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <CoreFoundation/CFByteOrder.h>
 namespace face {
 namespace storage {
 
@@ -74,23 +75,21 @@ class FeatureFile::Implement {
             fclose(file);
             return;
         }
-
-        if (!exist) {
-            memset(addr, 0, file_size);
-            size_t header_size = sizeof(FeatureFileHeader);
-            FeatureFileHeader header;
-            header.magic = FACE_FEATURE_FILE_MAGIC;
-            memcpy(header.appid, appId.c_str(), std::min(32, (int)appId.length()));
-            header.index = m_index;
-            header.count = 0;
-            memcpy(addr, &header, header_size);
-            // 首次创建时手动刷新一次
-            msync(addr, file_size, MS_SYNC);
-        }
         m_addr = addr;
         m_fd = fd;
         m_header = reinterpret_cast<FeatureFileHeader *>((void *)addr);
         m_item = m_header->features;
+        if (!exist) {
+            memset(addr, 0, file_size);
+            std::uint32_t magic = common::SwapInt32HostToLittle(FACE_FEATURE_FILE_MAGIC);
+            memcpy(m_addr, &magic, sizeof(std::uint32_t));
+            memcpy(m_addr + offsetof(FeatureFileHeader, appid), appId.c_str(), std::min(32, (int)appId.length()));
+            WriteIndex(m_index);
+            WriteCount(0);
+            // 首次创建时手动刷新一次
+            msync(addr, file_size, MS_SYNC);
+        }
+
 #ifndef NDEBUG
         asm("nop");
 #endif
@@ -114,7 +113,7 @@ class FeatureFile::Implement {
         if (m_header == nullptr) {
             return false;
         }
-        uint32_t count = m_header->count;
+        uint32_t count = ReadCount();
         return count >= FACE_FEATURE_FILE_MAX_ITEM;
     }
 
@@ -126,6 +125,30 @@ class FeatureFile::Implement {
         return true;
     }
 
+    void WriteIndex(std::uint16_t index) {
+        std::uint16_t _index = common::SwapInt16HostToLittle(index);
+        memcpy(m_addr + offsetof(FeatureFileHeader, index), &_index, sizeof(std::uint16_t));
+    }
+
+    std::uint16_t ReadIndex() const {
+        std::uint16_t index = 0;
+        memcpy(&index, m_addr + offsetof(FeatureFileHeader, index), sizeof(std::uint16_t));
+        index = common::SwapInt16LittleToHost(index);
+        return index;
+    }
+
+    void WriteCount(std::uint32_t count) {
+        std::uint32_t _count = common::SwapInt32HostToLittle(count);
+        memcpy(m_addr + offsetof(FeatureFileHeader, count), &_count, sizeof(std::uint32_t));
+    }
+
+    std::uint32_t ReadCount() const {
+        std::uint32_t count = 0;
+        memcpy(&count, m_addr + offsetof(FeatureFileHeader, count), sizeof(std::uint32_t));
+        count = common::SwapInt32LittleToHost(count);
+        return count;
+    }
+
     std::optional<std::uint32_t> AddFeature(const std::vector<float> &feature) {
         std::unique_lock<std::shared_mutex> lck(m_mutex);
         if (m_header == nullptr) {
@@ -133,15 +156,14 @@ class FeatureFile::Implement {
             return std::nullopt;
         }
 
-        uint32_t count = m_header->count;
+        uint32_t count = ReadCount();
         if (count >= FACE_FEATURE_FILE_MAX_ITEM) {
             SPDLOG_ERROR("current feature file is fully written path: {}", m_path.string());
             return std::nullopt;
         }
 
-        auto hostOrder = common::NativeOrder();
         float temp[FACE_FEATURE_LENGHT] = {0};
-        if (hostOrder == common::ByteOrder::BIG) {
+        if (common::NativeIsBig()) {
             size_t index = 0;
             for (const auto &value : feature) {
                 temp[index++] = common::float_big_to_little(value);
@@ -154,7 +176,7 @@ class FeatureFile::Implement {
             memcpy(temp, feature.data(), copyLen);
         }
 
-        m_header->count = count + 1;
+        WriteCount(count + 1);
         FeatureItem *addItem = m_item + count;
         memcpy(addItem->value, temp, sizeof(temp));
         return std::make_optional<std::uint32_t>(count);
@@ -166,15 +188,14 @@ class FeatureFile::Implement {
             return std::nullopt;
         }
 
-        uint32_t count = m_header->count;
+        uint32_t count = ReadCount();
         if (offset >= count) {
             return std::nullopt;
         }
 
         std::vector<float> result(FACE_FEATURE_LENGHT, 0.0f);
         memcpy(result.data(), m_item + (sizeof(FeatureItem) * count), sizeof(FeatureItem));
-        auto hostOrder = common::NativeOrder();
-        if (hostOrder == common::ByteOrder::BIG) {
+        if (common::NativeIsBig()) {
             for (size_t idx = 0; idx < FACE_FEATURE_LENGHT; idx++) {
                 result[idx] = common::float_little_to_big(result[idx]);
             }

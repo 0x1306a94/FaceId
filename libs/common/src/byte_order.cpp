@@ -7,6 +7,12 @@
 
 #include "byte_order.hpp"
 
+#ifdef __APPLE__
+#include <CoreFoundation/CFByteOrder.h>
+#else
+
+#endif
+
 namespace face {
 namespace common {
 ByteOrder NativeOrder() {
@@ -18,6 +24,56 @@ ByteOrder NativeOrder() {
     c.a = 1;
     return (c.b & 1 ? ByteOrder::LITTLE : ByteOrder::BIG);
 }
+
+#ifdef __APPLE__
+uint16_t SwapInt16HostToLittle(uint16_t arg) {
+    return CFSwapInt16HostToLittle(arg);
+}
+
+uint16_t SwapInt16LittleToHost(uint16_t arg) {
+    return CFSwapInt16LittleToHost(arg);
+}
+
+uint32_t SwapInt32HostToLittle(uint32_t arg) {
+    return CFSwapInt32HostToLittle(arg);
+}
+
+uint32_t SwapInt32LittleToHost(uint32_t arg) {
+    return CFSwapInt32LittleToHost(arg);
+}
+
+uint64_t SwapInt64HostToLittle(uint64_t arg) {
+    return CFSwapInt64HostToLittle(arg);
+}
+
+uint64_t SwapInt64LittleToHost(uint64_t arg) {
+    return CFSwapInt64LittleToHost(arg);
+}
+#else
+uint16_t SwapInt16HostToLittle(uint16_t arg) {
+    return arg;
+}
+
+uint16_t SwapInt16LittleToHost(uint16_t arg) {
+    return arg;
+}
+
+uint32_t SwapInt32HostToLittle(uint32_t arg) {
+    return arg;
+}
+
+uint32_t SwapInt32LittleToHost(uint32_t arg) {
+    return arg;
+}
+
+uint64_t SwapInt64HostToLittle(uint64_t arg) {
+    return arg;
+}
+
+uint64_t SwapInt64LittleToHost(uint64_t arg) {
+    return arg;
+}
+#endif
 
 float float_little_to_big(float x) {
     union {
