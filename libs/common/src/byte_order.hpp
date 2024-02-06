@@ -18,10 +18,7 @@ enum class ByteOrder {
 };
 
 ByteOrder NativeOrder();
-
-inline bool NativeIsBig(void) {
-    return NativeOrder() == ByteOrder::BIG;
-}
+bool NativeIsBig(void);
 
 uint16_t SwapInt16HostToLittle(uint16_t arg);
 uint16_t SwapInt16LittleToHost(uint16_t arg);
@@ -32,8 +29,11 @@ uint32_t SwapInt32LittleToHost(uint32_t arg);
 uint64_t SwapInt64HostToLittle(uint64_t arg);
 uint64_t SwapInt64LittleToHost(uint64_t arg);
 
-float float_little_to_big(float x);
-float float_big_to_little(float x);
+float SwapFloatHostToLittle(float arg);
+float SwapFloatLittleToHost(float arg);
+
+float float_little_to_big(float arg);
+float float_big_to_little(float arg);
 
 std::ostream &operator<<(std::ostream &os, const ByteOrder &order);
 

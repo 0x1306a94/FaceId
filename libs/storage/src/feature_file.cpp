@@ -26,7 +26,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <CoreFoundation/CFByteOrder.h>
 namespace face {
 namespace storage {
 
