@@ -23,9 +23,36 @@ git checkout a32e2faa0694c0f841ace4df9ead0407b78363c6
 
 echo "apply OpenRoleZoo patch"
 
-cd OpenRoleZoo
+function apply_path() {
+    echo "[*] apply path ${1} ${2}"
+    cd $SEETA_FACE_DIR/${1}
+    git apply --check $GIT_ROOT_DIR/patch/${2}
+    git apply $GIT_ROOT_DIR/patch/${2}
+}
 
-git apply --check $GIT_ROOT_DIR/patch/pot.h.patch
-git apply $GIT_ROOT_DIR/patch/pot.h.patch
+apply_path "OpenRoleZoo" "pot.h.patch"
+
+# cd $SEETA_FACE_DIR/OpenRoleZoo
+
+# git apply --check $GIT_ROOT_DIR/patch/pot.h.patch
+# git apply $GIT_ROOT_DIR/patch/pot.h.patch
+
+
+case $(uname | tr '[:upper:]' '[:lower:]') in
+  linux*)
+    #
+    ;;
+  darwin*)
+    # macOS
+    apply_path "TenniS" "tennis_macos.patch"
+    ;;
+  msys*)
+    # windows
+    ;;
+  *)
+    echo "[*] uname: $(uname)"
+    ;;
+esac
+
 
 cd $CUR_DIR
