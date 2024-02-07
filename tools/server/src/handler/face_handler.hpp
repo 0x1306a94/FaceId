@@ -25,6 +25,8 @@ struct Face {
     static int Info(const HttpContextPtr &ctx);
     static int Feature(const HttpContextPtr &ctx);
     static int List(const HttpContextPtr &ctx);
+    static int Match(const HttpContextPtr &ctx);
+    static int Search(const HttpContextPtr &ctx);
 };
 };  // namespace handler
 };  // namespace server

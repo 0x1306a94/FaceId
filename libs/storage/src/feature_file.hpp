@@ -26,11 +26,13 @@ class FeatureFile {
 
     std::string GetAppId() const;
     std::uint16_t GetIndex() const;
+    std::uint32_t GetCount() const;
     bool IsFull() const;
     bool IsValid() const;
 
     std::optional<std::uint32_t> AddFeature(const std::vector<float> &feature);
     std::optional<std::vector<float>> GetFeature(std::uint32_t offset);
+    void CopyFeature(std::size_t start,std::size_t count, float *dst);
 
   private:
     class Implement;

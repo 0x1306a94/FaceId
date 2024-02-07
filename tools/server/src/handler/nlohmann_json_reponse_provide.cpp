@@ -21,7 +21,7 @@ void from_json(const nlohmann::json &j, face::server::reqparmas::FaceAddParams &
     if (j.contains("userInfo")) {
         params.userInfo = j["userInfo"].get<std::string>();
     }
-    
+
     if (j.contains("encode")) {
         params.encode = j["encode"].get<bool>();
     }
@@ -40,6 +40,27 @@ void from_json(const nlohmann::json &j, face::server::reqparmas::FaceListParams 
     }
     if (j.contains("count")) {
         params.count = j["count"].get<std::int64_t>();
+    }
+}
+
+void from_json(const nlohmann::json &j, face::server::reqparmas::FaceMatchParams &params) {
+    params.source = j["source"].get<std::string>();
+    params.target = j["target"].get<std::string>();
+}
+
+void from_json(const nlohmann::json &j, face::server::reqparmas::FaceSearchParams &params) {
+    params.appId = j["appId"].get<std::string>();
+    params.source = j["source"].get<std::string>();
+    if (j.contains("userId")) {
+        params.userId = j["userId"].get<std::string>();
+    }
+
+    if (j.contains("threshold")) {
+        params.threshold = j["threshold"].get<float>();
+    }
+
+    if (j.contains("maxUser")) {
+        params.maxUser = j["maxUser"].get<int>();
     }
 }
 
@@ -110,12 +131,18 @@ void to_json(nlohmann::json &j, const face::server::reqparmas::FaceAddResponse &
     j["added"] = response.added;
     j["array"] = response.array;
     j["encode"] = response.encode;
-//    if (!response.array.empty()) {
-//        j["array"] = response.array;
-//    }
-//
-//    if (!response.encode.empty()) {
-//        j["encode"] = response.encode;
-//    }
+    //    if (!response.array.empty()) {
+    //        j["array"] = response.array;
+    //    }
+    //
+    //    if (!response.encode.empty()) {
+    //        j["encode"] = response.encode;
+    //    }
+}
+
+void to_json(nlohmann::json &j, const face::server::reqparmas::FaceMatchResponse &response) {
+    j = nlohmann::json{
+        {"score", response.score},
+    };
 }
 };  // namespace ns

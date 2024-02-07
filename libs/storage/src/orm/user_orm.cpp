@@ -43,7 +43,7 @@ UserORM::UserORM()
 UserORM::UserORM(const std::string &appId, const std::string &userId, const std::string &info)
     : appId(appId)
     , userId(userId)
-    , userInfo(userInfo) {
+    , userInfo(info) {
 }
 };  // namespace storage
 };  // namespace face

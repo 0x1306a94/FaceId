@@ -8,6 +8,7 @@
 #include "Storage.hpp"
 #include "config.hpp"
 #include "feature_file.hpp"
+#include "feature_file_header.h"
 #include "spdlog_common.hpp"
 
 #include "./orm/application_orm.hpp"
@@ -376,6 +377,20 @@ class Storage::Implement {
         return std::nullopt;
     }
 
+    std::optional<User> GetUser(const std::string &appid, std::uint16_t index, std::uint32_t offset) {
+        auto select = this->m_db->prepareSelect<FaceRecordORM>()
+                          .onResultFields(FaceRecordORM::allFields())
+                          .fromTable(FaceRecordORM::TableName())
+                          .where(WCDB_FIELD(FaceRecordORM::appId) == appid && WCDB_FIELD(FaceRecordORM::fileIndex) == index && WCDB_FIELD(FaceRecordORM::fileOffset) == offset)
+                          .limit(1);
+
+        auto result = select.firstObject();
+        if (result.succeed()) {
+            return this->GetUser(appid, result.value().userId);
+        }
+        return std::nullopt;
+    }
+
     std::optional<FaceRecord> AddFaceRecord(const std::string &appId, const std::string &userId, const std::string userInfo, const std::vector<float> &feature) {
         auto app = this->GetApplication(appId);
         if (!app) {
@@ -497,6 +512,31 @@ class Storage::Implement {
         auto result = featureFile->GetFeature(record.offset);
         return result;
     }
+
+    std::vector<FaceFeaturChunkInfo> GetFaceFeatures(const std::string &appId) {
+        auto files = this->GetFeatureFiles(appId);
+        std::vector<FaceFeaturChunkInfo> result;
+        for (const auto &file : files) {
+            auto index = file->GetIndex();
+            auto count = file->GetCount();
+            if (count == 0) {
+                continue;
+            }
+            void *ptr = malloc(count * FACE_FEATURE_SIZE);
+            if (ptr == nullptr) {
+                continue;
+            }
+            std::shared_ptr<float> memPtr((float *)ptr, [](float *ptr) {
+                free(ptr);
+            });
+            if (!memPtr) {
+                continue;
+            }
+            file->CopyFeature(0, count, memPtr.get());
+            result.emplace_back(index, 0, count, memPtr);
+        }
+        return result;
+    }
 };
 
 Storage::Storage(const Config &config)
@@ -530,6 +570,10 @@ std::optional<User> Storage::GetUser(const std::string &appid, const std::string
     return this->m_impl->GetUser(appid, userId);
 }
 
+std::optional<User> Storage::GetUser(const std::string &appid, std::uint16_t index, std::uint32_t offset) {
+    return this->m_impl->GetUser(appid, index, offset);
+}
+
 std::optional<FaceRecord> Storage::AddFaceRecord(const std::string &appId, const std::string &userId, const std::string &userInfo, const std::vector<float> &feature) {
     return this->m_impl->AddFaceRecord(appId, userId, userInfo, feature);
 }
@@ -544,6 +588,10 @@ std::optional<FaceRecord> Storage::GetFaceRecord(const std::string &appId, const
 
 std::optional<std::vector<float>> Storage::GetFaceFeature(const FaceRecord &record) {
     return this->m_impl->GetFaceFeature(record);
+}
+
+std::vector<FaceFeaturChunkInfo> Storage::GetFaceFeatures(const std::string &appId) {
+    return this->m_impl->GetFaceFeatures(appId);
 }
 
 }  // namespace storage

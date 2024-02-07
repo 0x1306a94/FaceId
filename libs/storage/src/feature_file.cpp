@@ -124,6 +124,15 @@ class FeatureFile::Implement {
         return true;
     }
 
+    std::uint32_t GetCount() const {
+        std::shared_lock<std::shared_mutex> lck(m_mutex);
+        if (m_header == nullptr) {
+            return 0;
+        }
+        auto count = ReadCount();
+        return count;
+    }
+
     void WriteIndex(std::uint16_t index) {
         std::uint16_t _index = common::SwapInt16HostToLittle(index);
         memcpy(m_addr + offsetof(FeatureFileHeader, index), &_index, sizeof(std::uint16_t));
@@ -202,6 +211,15 @@ class FeatureFile::Implement {
         }
         return std::make_optional<std::vector<float>>(std::move(result));
     }
+
+    void CopyFeature(std::size_t start, std::size_t count, float *dst) {
+        if (dst == nullptr) {
+            return;
+        }
+        FeatureItem *src = m_item + start;
+        std::size_t copyLen = count * sizeof(FeatureItem);
+        memcpy(dst, src->value, copyLen);
+    }
 };
 
 FeatureFile::FeatureFile(const std::string &appId, std::uint16_t index, const std::string &dir)
@@ -219,6 +237,10 @@ std::uint16_t FeatureFile::GetIndex() const {
     return impl->m_index;
 }
 
+std::uint32_t FeatureFile::GetCount() const {
+    return impl->GetCount();
+}
+
 bool FeatureFile::IsFull() const {
     return impl->IsFull();
 }
@@ -233,6 +255,10 @@ std::optional<std::uint32_t> FeatureFile::AddFeature(const std::vector<float> &f
 
 std::optional<std::vector<float>> FeatureFile::GetFeature(std::uint32_t offset) {
     return impl->GetFeature(offset);
+}
+
+void FeatureFile::CopyFeature(std::size_t start, std::size_t count, float *dst) {
+    return impl->CopyFeature(start, count, dst);
 }
 
 }  // namespace storage

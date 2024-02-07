@@ -16,7 +16,8 @@
 namespace face {
 namespace storage {
 class FaceRecord;
-};
+class User;
+};  // namespace storage
 };  // namespace face
 
 namespace face {
@@ -52,6 +53,23 @@ struct FaceListParams {
     std::string appId{""};
     std::string userId{""};
     std::uint64_t count = 0;
+};
+
+struct FaceMatchParams {
+    std::string source{""};
+    std::string target{""};
+};
+
+struct FaceMatchResponse {
+    float score;
+};
+
+struct FaceSearchParams {
+    std::string appId{""};
+    std::string source{""};
+    std::string userId{""};
+    float threshold{80.f};
+    int maxUser{1};
 };
 
 };  // namespace reqparmas

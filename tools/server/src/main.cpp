@@ -164,7 +164,6 @@ int main(int argc, char *argv[]) {
     signal(SIGINT, signal_exit_handler);
     // signal(SIGKILL, signal_exit_handler);
     signal(SIGTERM, signal_exit_handler);
-    // std::cout << config << std::endl;
 
     SPDLOG_INFO("verison: {} git hash: {} git branch: {}", FACE_ID_SERVER_VERSION,
                 FACE_ID_SERVER_GIT_HASH, FACE_ID_SERVER_GIT_BRANCH);
@@ -177,12 +176,6 @@ int main(int argc, char *argv[]) {
 
     hv::HttpService service;
     face::server::Router::Register(service);
-    // hlog_disable();
-    // if (config.http_log.empty()) {
-    //     hlog_disable();
-    // } else {
-    //     hlog_set_file(config.http_log.c_str());
-    // }
 
     hlog_set_handler(libhv_log_handler);
 
