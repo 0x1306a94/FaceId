@@ -22,5 +22,5 @@ fi
 cd $WCDB_DIR
 
 $WCDB_DIR/tools/version/build.sh -p macOS -l Cpp -d $WCDB_BUILD_DIR --disable-bitcode
-cp -Rf $WCDB_BUILD_DIR/WCDBCpp.framework $WCDB_INSTALL_DIR/
+cp -Rf $WCDB_BUILD_DIR/WCDBCpp.framework $WCDB_INSTALL_DIR
 cd $CUR_DIR
