@@ -365,7 +365,7 @@ class Storage::Implement {
         return std::nullopt;
     }
 
-    std::optional<FaceRecord> AddFaceRecord(const std::string &appId, const std::string &userId, const std::optional<std::string> &userInfo, const std::vector<float> &feature) {
+    std::optional<FaceRecord> AddFaceRecord(const std::string &appId, const std::string &userId, const std::string userInfo, const std::vector<float> &feature) {
         auto app = this->GetApplication(appId);
         if (!app) {
             SPDLOG_ERROR("corresponding appid application does not exist: {}", appId);
@@ -387,7 +387,7 @@ class Storage::Implement {
             }
 
             auto ts = common::date_util::CurrentMilliTimestamp();
-            UserORM user(appId, userId, userInfo.value_or(std::string()));
+            UserORM user(appId, userId, userInfo);
             user.createDate = ts;
             user.updateDate = ts;
             if (existUser.failed()) {
