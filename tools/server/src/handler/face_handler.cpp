@@ -60,24 +60,23 @@ int Face::Add(const HttpContextPtr &ctx) {
         return SendFail(ctx, errorCode, "");
     }
     auto value = result.ok_value();
-    auto added = false;
     auto addResult = storage->AddFaceRecord(params.appId, params.userId, params.userInfo, value.feature);
+    face::server::reqparmas::FaceAddResponse response;
     if (addResult) {
-        added = true;
-    }
-    face::server::reqparmas::FaceAddResponse response(std::make_shared<face::storage::FaceRecord>(addResult.value()));
-    response.added = added;
-    if (params.encode) {
-        if (common::NativeIsBig()) {
-            for (auto &f : value.feature) {
-                f = common::float_big_to_little(f);
+        response.added = true;
+        response.info = std::make_shared<face::storage::FaceRecord>(addResult.value());
+        if (params.encode) {
+            if (common::NativeIsBig()) {
+                for (auto &f : value.feature) {
+                    f = common::float_big_to_little(f);
+                }
             }
+            std::string source(reinterpret_cast<const char *>(value.feature.data()), (sizeof(float) * value.feature.size()));
+            std::string base64_str = common::base64::to_base64(source);
+            response.encode = base64_str;
+        } else {
+            response.array = value.feature;
         }
-        std::string source(reinterpret_cast<const char *>(value.feature.data()), (sizeof(float) * value.feature.size()));
-        std::string base64_str = common::base64::to_base64(source);
-        response.encode = base64_str;
-    } else {
-        response.array = value.feature;
     }
     return SendSuccess(ctx, response);
 }
