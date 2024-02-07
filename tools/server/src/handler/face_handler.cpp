@@ -11,6 +11,9 @@
 
 #include "result.hpp"
 
+#include "../common/src/base64.hpp"
+#include "../common/src/byte_order.hpp"
+
 #include "../src/server_context.hpp"
 #include "../storage/src/Storage.hpp"
 #include "../storage/src/face_record.hpp"
@@ -62,11 +65,59 @@ int Face::Add(const HttpContextPtr &ctx) {
     if (addResult) {
         added = true;
     }
-    return SendSuccess(ctx, nlohmann::json{{"feature", value.feature}, {"added", added}});
+    face::server::reqparmas::FaceAddResponse response(std::make_shared<face::storage::FaceRecord>(addResult.value()));
+    response.added = added;
+    if (params.encode) {
+        if (common::NativeIsBig()) {
+            for (auto &f : value.feature) {
+                f = common::float_big_to_little(f);
+            }
+        }
+        std::string source(reinterpret_cast<const char *>(value.feature.data()), (sizeof(float) * value.feature.size()));
+        std::string base64_str = common::base64::to_base64(source);
+        response.encode = base64_str;
+    } else {
+        response.array = value.feature;
+    }
+    return SendSuccess(ctx, response);
 }
 
 int Face::Info(const HttpContextPtr &ctx) {
-    return 200;
+    auto json = ctx->request->GetJson();
+    face::server::reqparmas::FaceInfoParams params;
+    try {
+        ns::from_json(json, params);
+    } catch (const std::exception &err) {
+        SPDLOG_ERROR("{}", err.what());
+        return SendFail(ctx, 400, err.what());
+    }
+    auto storage = server::Context::Current()->GetStorage();
+    auto face = storage->GetFaceRecord(params.appId, params.userId, params.faceId);
+    if (face) {
+        return SendSuccess(ctx, face.value());
+    }
+    return SendSuccess(ctx, {});
+}
+
+int Face::Feature(const HttpContextPtr &ctx) {
+    auto json = ctx->request->GetJson();
+    face::server::reqparmas::FaceInfoParams params;
+    try {
+        ns::from_json(json, params);
+    } catch (const std::exception &err) {
+        SPDLOG_ERROR("{}", err.what());
+        return SendFail(ctx, 400, err.what());
+    }
+    auto storage = server::Context::Current()->GetStorage();
+    auto face = storage->GetFaceRecord(params.appId, params.userId, params.faceId);
+    if (!face) {
+        return SendSuccess(ctx, {});
+    }
+    auto result = storage->GetFaceFeature(face.value());
+    if (!result) {
+        return SendSuccess(ctx, {});
+    }
+    return SendSuccess(ctx, nlohmann::json{result.value()});
 }
 
 int Face::List(const HttpContextPtr &ctx) {

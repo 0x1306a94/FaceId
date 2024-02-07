@@ -24,13 +24,13 @@ class FaceRecordORM {
     std::int64_t identifier;
     std::string appId;
     std::string userId;
-    std::int64_t fileIndex;
-    std::int64_t fileOffset;
+    std::uint16_t fileIndex;
+    std::uint32_t fileOffset;
     std::int64_t createDate;
     std::int64_t updateDate;
 
     FaceRecordORM();
-    FaceRecordORM(const std::string &appId, const std::string &userId, std::int64_t fileIndex, std::int64_t fileOffset);
+    FaceRecordORM(const std::string &appId, const std::string &userId, std::uint16_t fileIndex, std::uint32_t fileOffset);
     WCDB_CPP_ORM_DECLARATION(FaceRecordORM);
 
     static std::string TableName();

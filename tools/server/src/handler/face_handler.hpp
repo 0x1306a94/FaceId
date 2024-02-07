@@ -23,6 +23,7 @@ namespace handler {
 struct Face {
     static int Add(const HttpContextPtr &ctx);
     static int Info(const HttpContextPtr &ctx);
+    static int Feature(const HttpContextPtr &ctx);
     static int List(const HttpContextPtr &ctx);
 };
 };  // namespace handler

@@ -21,6 +21,16 @@ void from_json(const nlohmann::json &j, face::server::reqparmas::FaceAddParams &
     if (j.contains("userInfo")) {
         params.userInfo = j["userInfo"].get<std::string>();
     }
+    
+    if (j.contains("encode")) {
+        params.encode = j["encode"].get<bool>();
+    }
+}
+
+void from_json(const nlohmann::json &j, face::server::reqparmas::FaceInfoParams &params) {
+    params.appId = j["appId"].get<std::string>();
+    params.userId = j["userId"].get<std::string>();
+    params.faceId = j["faceId"].get<std::int64_t>();
 }
 
 void from_json(const nlohmann::json &j, face::server::reqparmas::FaceListParams &params) {
@@ -72,10 +82,11 @@ void to_json(nlohmann::json &j, const std::list<face::storage::Application> &app
 
 void to_json(nlohmann::json &j, const face::storage::FaceRecord &face) {
     j = nlohmann::json{
+        {"faceId", face.identifier},
         {"appId", face.appId},
         {"userId", face.userId},
-        {"fileIndex", face.fileIndex},
-        {"fileOffset", face.fileOffset},
+        {"index", face.index},
+        {"offset", face.offset},
         {"createDate", face.createDate},
         {"updateDate", face.updateDate},
     };
@@ -88,5 +99,23 @@ void to_json(nlohmann::json &j, const std::list<face::storage::FaceRecord> &face
         to_json(obj, face);
         j.push_back(obj);
     }
+}
+
+void to_json(nlohmann::json &j, const face::server::reqparmas::FaceAddResponse &response) {
+    nlohmann::json info;
+    if (response.info) {
+        to_json(info, *response.info);
+    }
+    j["info"] = info;
+    j["added"] = response.added;
+    j["array"] = response.array;
+    j["encode"] = response.encode;
+//    if (!response.array.empty()) {
+//        j["array"] = response.array;
+//    }
+//
+//    if (!response.encode.empty()) {
+//        j["encode"] = response.encode;
+//    }
 }
 };  // namespace ns

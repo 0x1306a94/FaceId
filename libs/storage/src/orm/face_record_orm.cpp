@@ -42,7 +42,7 @@ FaceRecordORM::FaceRecordORM()
     : FaceRecordORM("", "", -1, -1) {
 }
 
-FaceRecordORM::FaceRecordORM(const std::string &appId, const std::string &userId, std::int64_t fileIndex, std::int64_t fileOffset)
+FaceRecordORM::FaceRecordORM(const std::string &appId, const std::string &userId, std::uint16_t fileIndex, std::uint32_t fileOffset)
     : identifier(-1)
     , appId(appId)
     , userId(userId)

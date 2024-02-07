@@ -32,8 +32,6 @@ class Storage {
     explicit Storage(const Config &config);
     ~Storage();
 
-    std::vector<float> QueryFeature(const std::string &userId);
-
     face::common::Result<Application, std::string> AddApplication(const std::string &appid, const std::string &name);
     std::list<Application> GetApplications(std::int64_t limit = 10);
     std::optional<Application> GetApplication(const std::string &appid);
@@ -44,6 +42,8 @@ class Storage {
 
     std::optional<FaceRecord> AddFaceRecord(const std::string &appId, const std::string &userId, const std::string &userInfo, const std::vector<float> &feature);
     std::list<FaceRecord> GetFaceRecords(const std::string &appId, const std::string &userId, std::int64_t limit = 10);
+    std::optional<FaceRecord> GetFaceRecord(const std::string &appId, const std::string &userId, std::int64_t faceId);
+    std::optional<std::vector<float>> GetFaceFeature(const FaceRecord &record);
 
   private:
     class Implement;

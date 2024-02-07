@@ -193,7 +193,8 @@ class FeatureFile::Implement {
         }
 
         std::vector<float> result(FACE_FEATURE_LENGHT, 0.0f);
-        memcpy(result.data(), m_item + (sizeof(FeatureItem) * count), sizeof(FeatureItem));
+        FeatureItem *addItem = m_item + offset;
+        memcpy(result.data(), addItem->value, sizeof(FeatureItem));
         if (common::NativeIsBig()) {
             for (size_t idx = 0; idx < FACE_FEATURE_LENGHT; idx++) {
                 result[idx] = common::float_little_to_big(result[idx]);

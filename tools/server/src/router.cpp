@@ -32,6 +32,7 @@ void Router::Register(hv::HttpService &service) {
 
     service.POST("/v1/face/add", handler::Face::Add);
     service.POST("/v1/face/info", handler::Face::Info);
+    service.POST("/v1/face/feature", handler::Face::Feature);
     service.POST("/v1/face/list", handler::Face::List);
 
     //    service.POST("/extract_file", Handler::extractFeatureFromFile);

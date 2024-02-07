@@ -143,7 +143,19 @@ class Storage::Implement {
         }
     }
 
-    std::shared_ptr<FeatureFile> GetFeatureFile(const std::string &appid) {
+    std::vector<std::shared_ptr<FeatureFile>> GetFeatureFiles(const std::string &appid) {
+        if (appid.empty()) {
+            return {};
+        }
+        std::lock_guard<std::mutex> lock(this->m_mutex);
+        auto iter = this->m_featureFiles.find(appid);
+        if (iter == this->m_featureFiles.end()) {
+            return {};
+        }
+        return iter->second;
+    }
+
+    std::shared_ptr<FeatureFile> GetWritableFeatureFile(const std::string &appid) {
         if (appid.empty()) {
             return nullptr;
         }
@@ -171,24 +183,23 @@ class Storage::Implement {
         return file;
     }
 
-    std::vector<float> QueryFeature(const std::string &userId) {
-        return {};
-        //        spdlog::stopwatch sw;
-        //        auto select = this->m_db->prepareSelect<FaceRecordORM>()
-        //                          .onResultFields(WCDB_FIELD(FaceRecordORM::feature))
-        //                          .fromTable(FaceRecordORM::TableName())
-        //                          .where(WCDB_FIELD(FaceRecordORM::userId) == userId)
-        //                          .limit(1);
-        //        ;
-        //        SPDLOG_INFO("db查询耗时: {}", duration_cast<milliseconds>(sw.elapsed()));
-        //        auto record = select.firstObject();
-        //        if (record.failed()) {
-        //            return {};
-        //        }
-        //        auto &data = record.value().feature;
-        //        std::vector<float> result(1024);
-        //        memcpy(result.data(), data.buffer(), data.size());
-        //        return result;
+    std::shared_ptr<FeatureFile> GetFeatureFile(const std::string &appid, std::int64_t index) {
+        if (appid.empty() || index < 0) {
+            return nullptr;
+        }
+        std::lock_guard<std::mutex> lock(this->m_mutex);
+        auto iter = this->m_featureFiles.find(appid);
+        if (iter == this->m_featureFiles.end()) {
+            return nullptr;
+        }
+        for (auto &file : iter->second) {
+            std::int16_t fileIndex = file->GetIndex();
+            if (fileIndex == index) {
+                return file;
+            }
+        }
+
+        return nullptr;
     }
 
     face::common::Result<Application, std::string> AddApplication(const std::string &appid, const std::string &name) {
@@ -372,7 +383,7 @@ class Storage::Implement {
             return std::nullopt;
         }
 
-        auto featureFile = this->GetFeatureFile(appId);
+        auto featureFile = this->GetWritableFeatureFile(appId);
         if (!featureFile) {
             return std::nullopt;
         }
@@ -417,7 +428,7 @@ class Storage::Implement {
                 WCDB_FIELD(FaceRecordORM::updateDate),
             };
             auto res = handler.insertObjects<FaceRecordORM>(face, FaceRecordORM::TableName(), fields);
-
+            face.identifier = *face.lastInsertedRowID;
             result = std::make_optional<FaceRecord>(face);
             return res;
         });
@@ -451,6 +462,41 @@ class Storage::Implement {
         }
         return results;
     }
+
+    std::optional<FaceRecord> GetFaceRecord(const std::string &appId, const std::string &userId, std::int64_t faceId) {
+        auto app = this->GetApplication(appId);
+        if (!app) {
+            SPDLOG_ERROR("corresponding appid application does not exist: {}", appId);
+            return std::nullopt;
+        }
+
+        auto user = this->GetUser(appId, userId);
+        if (!user) {
+            return std::nullopt;
+        }
+
+        auto select = this->m_db->prepareSelect<FaceRecordORM>()
+                          .onResultFields(FaceRecordORM::allFields())
+                          .fromTable(FaceRecordORM::TableName());
+
+        select.where(WCDB_FIELD(FaceRecordORM::identifier) == faceId && WCDB_FIELD(FaceRecordORM::appId) == appId && WCDB_FIELD(FaceRecordORM::userId) == userId);
+        select.limit(1);
+
+        auto result = select.firstObject();
+        if (result.succeed()) {
+            return std::make_optional<FaceRecord>(result.value());
+        }
+        return std::nullopt;
+    }
+
+    std::optional<std::vector<float>> GetFaceFeature(const FaceRecord &record) {
+        auto featureFile = this->GetFeatureFile(record.appId, record.index);
+        if (!featureFile) {
+            return std::nullopt;
+        }
+        auto result = featureFile->GetFeature(record.offset);
+        return result;
+    }
 };
 
 Storage::Storage(const Config &config)
@@ -458,10 +504,6 @@ Storage::Storage(const Config &config)
 }
 
 Storage::~Storage() {
-}
-
-std::vector<float> Storage::QueryFeature(const std::string &userId) {
-    return this->m_impl->QueryFeature(userId);
 }
 
 face::common::Result<Application, std::string> Storage::AddApplication(const std::string &appid, const std::string &name) {
@@ -495,5 +537,14 @@ std::optional<FaceRecord> Storage::AddFaceRecord(const std::string &appId, const
 std::list<FaceRecord> Storage::GetFaceRecords(const std::string &appId, const std::string &userId, std::int64_t limit) {
     return this->m_impl->GetFaceRecords(appId, userId, limit);
 }
+
+std::optional<FaceRecord> Storage::GetFaceRecord(const std::string &appId, const std::string &userId, std::int64_t faceId) {
+    return this->m_impl->GetFaceRecord(appId, userId, faceId);
+}
+
+std::optional<std::vector<float>> Storage::GetFaceFeature(const FaceRecord &record) {
+    return this->m_impl->GetFaceFeature(record);
+}
+
 }  // namespace storage
 }  // namespace face

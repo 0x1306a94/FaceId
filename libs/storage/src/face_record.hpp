@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace face {
 namespace storage {
@@ -19,11 +20,12 @@ class FaceRecord {
     std::int64_t identifier;
     std::string appId;
     std::string userId;
-    std::int64_t fileIndex;
-    std::int64_t fileOffset;
+    std::uint16_t index;
+    std::uint32_t offset;
     std::int64_t createDate;
     std::int64_t updateDate;
-    explicit FaceRecord(const std::string &appId, const std::string &userId, std::int64_t fileIndex, std::int64_t fileOffset);
+    std::vector<float> feature;
+    explicit FaceRecord(const std::string &appId, const std::string &userId, std::uint16_t index, std::uint32_t offset);
     explicit FaceRecord(const FaceRecordORM &source);
 };
 }  // namespace storage

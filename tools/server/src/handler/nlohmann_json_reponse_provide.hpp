@@ -16,6 +16,8 @@ namespace face {
 namespace server {
 namespace reqparmas {
 struct FaceAddParams;
+struct FaceAddResponse;
+struct FaceInfoParams;
 struct FaceListParams;
 };  // namespace reqparmas
 };  // namespace server
@@ -30,6 +32,7 @@ class FaceRecord;
 };  // namespace face
 namespace ns {
 void from_json(const nlohmann::json &j, face::server::reqparmas::FaceAddParams &params);
+void from_json(const nlohmann::json &j, face::server::reqparmas::FaceInfoParams &params);
 void from_json(const nlohmann::json &j, face::server::reqparmas::FaceListParams &params);
 
 void to_json(nlohmann::json &j, const face::storage::User &user);
@@ -40,6 +43,7 @@ void to_json(nlohmann::json &j, const std::list<face::storage::Application> &app
 
 void to_json(nlohmann::json &j, const face::storage::FaceRecord &face);
 void to_json(nlohmann::json &j, const std::list<face::storage::FaceRecord> &faces);
+void to_json(nlohmann::json &j, const face::server::reqparmas::FaceAddResponse &response);
 };  // namespace ns
 
 #endif /* face_id_server_nlohmann_json_reponse_provide_hpp */

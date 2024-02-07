@@ -357,15 +357,6 @@ int Handler::queryFeature(const HttpContextPtr &ctx) {
         return sendFail(ctx, -1, "index params empty");
     }
 
-    do {
-        auto storage = Context::Current()->GetStorage();
-        auto feature = storage->QueryFeature(value);
-        nlohmann::json response;
-        response["code"] = "0";
-        response["result"] = feature;
-        return ctx->send(response.dump());
-    } while (0);
-
     int64_t index = -1;
 
     //    try {
