@@ -32,6 +32,8 @@ namespace fs = std::filesystem;
 
 const char *ENV_DISABLE_CONSOLE_LOG_NAME = "DISABLE_CONSOLE_LOG";
 
+static int LOG_verbosity = -1;
+
 void setup_log(const std::string &log_dir) {
     if (log_dir.empty()) {
         spdlog::set_level(spdlog::level::off);
@@ -71,6 +73,13 @@ void setup_log(const std::string &log_dir) {
     auto logger = std::make_shared<spdlog::logger>("multi_sink", m_sinks.begin(),
                                                    m_sinks.end());
     logger->flush_on(spdlog::level::info);
+//    logger->set_level(spdlog::level::trace);
+
+    if (LOG_verbosity < 0) {
+        logger->set_level(spdlog::level::err);
+    } else {
+        logger->set_level(static_cast<spdlog::level::level_enum>(LOG_verbosity));
+    }
 
     spdlog::register_logger(logger);
     spdlog::set_default_logger(logger);
@@ -126,6 +135,14 @@ int main(int argc, char *argv[]) {
     program.add_argument("-c", "--config")
         .required()
         .help("config file.");
+
+    program.add_argument("-V", "--verbose")
+        .action([&](const auto &) { ++LOG_verbosity; })
+        .append()
+        .default_value(false)
+        .implicit_value(true)
+        .nargs(0);
+
     program.add_argument("-v", "--version")
         .action([](const auto & /*unused*/) {
             std::cout << "verison: " << FACE_ID_SERVER_VERSION << "\n"

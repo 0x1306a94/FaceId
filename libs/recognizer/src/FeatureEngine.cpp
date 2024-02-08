@@ -79,7 +79,7 @@ class FeatureEngine::Impl {
 
         SeetaFaceInfoArray _faces = FD->detect(simg);
 
-        SPDLOG_INFO("faces size {}", _faces.size);
+        SPDLOG_TRACE("faces size {}", _faces.size);
         if (_faces.size <= 0) {
             return face::common::Err<FeatureEngine::ErrorCode>(FeatureEngine::ErrorCode::NoFace);
         }
@@ -117,11 +117,11 @@ class FeatureEngine::Impl {
 FeatureEngine::FeatureEngine(const std::string &model_dir)
     : impl(std::make_unique<Impl>(model_dir)) {
 
-    SPDLOG_INFO("Create FR engine");
+    SPDLOG_TRACE("Create FR engine");
 }
 
 FeatureEngine::~FeatureEngine() {
-    SPDLOG_INFO("Destroy FR engine");
+    SPDLOG_TRACE("Destroy FR engine");
 }
 
 face::common::Result<FeatureEngine::Result, FeatureEngine::ErrorCode> FeatureEngine::ExtractFeatureFromBase64(const std::string &base64_str) const {
@@ -131,7 +131,7 @@ face::common::Result<FeatureEngine::Result, FeatureEngine::ErrorCode> FeatureEng
     try {
 
         cv::Mat img = cv::imdecode(data, cv::IMREAD_COLOR);
-        SPDLOG_INFO("从base64加载图片 elapsed: {}", duration_cast<milliseconds>(sw.elapsed()));
+        SPDLOG_TRACE("从base64加载图片 elapsed: {}", duration_cast<milliseconds>(sw.elapsed()));
 
         if (img.empty()) {
             return face::common::Err<FeatureEngine::ErrorCode>(FeatureEngine::ErrorCode::ImageFail);
@@ -153,7 +153,7 @@ face::common::Result<FeatureEngine::Result, FeatureEngine::ErrorCode> FeatureEng
         spdlog::stopwatch sw;
         std::vector<uchar> data(source.begin(), source.end());
         cv::Mat img = cv::imdecode(data, cv::IMREAD_COLOR);
-        SPDLOG_INFO("从内存加载图片 elapsed: {}", duration_cast<milliseconds>(sw.elapsed()));
+        SPDLOG_TRACE("从内存加载图片 elapsed: {}", duration_cast<milliseconds>(sw.elapsed()));
 
         if (img.empty()) {
             return face::common::Err<FeatureEngine::ErrorCode>(FeatureEngine::ErrorCode::ImageFail);
@@ -174,7 +174,7 @@ face::common::Result<FeatureEngine::Result, FeatureEngine::ErrorCode> FeatureEng
         spdlog::stopwatch sw;
         std::vector<uchar> data(buffer.data(), buffer.data() + buffer.size());
         cv::Mat img = cv::imdecode(data, cv::IMREAD_COLOR);
-        SPDLOG_INFO("从内存加载图片 size {} elapsed: {}", buffer.size(), duration_cast<milliseconds>(sw.elapsed()));
+        SPDLOG_TRACE("从内存加载图片 size {} elapsed: {}", buffer.size(), duration_cast<milliseconds>(sw.elapsed()));
 
         if (img.empty()) {
             return face::common::Err<FeatureEngine::ErrorCode>(FeatureEngine::ErrorCode::ImageFail);
@@ -194,7 +194,7 @@ face::common::Result<FeatureEngine::Result, FeatureEngine::ErrorCode> FeatureEng
     try {
         spdlog::stopwatch sw;
         cv::Mat img = cv::imread(image_path, cv::IMREAD_COLOR);
-        SPDLOG_INFO("从磁盘加载图片 elapsed: {}", duration_cast<milliseconds>(sw.elapsed()));
+        SPDLOG_TRACE("从磁盘加载图片 elapsed: {}", duration_cast<milliseconds>(sw.elapsed()));
 
         if (img.empty()) {
             return face::common::Err<FeatureEngine::ErrorCode>(FeatureEngine::ErrorCode::ImageFail);

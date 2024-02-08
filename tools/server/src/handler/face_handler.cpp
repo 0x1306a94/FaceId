@@ -242,7 +242,7 @@ int Face::Search(const HttpContextPtr &ctx) {
 
         spdlog::stopwatch sw;
         auto source = fr->ExtractFeatureFromBase64(params.source);
-        SPDLOG_INFO("source人脸特征提取 base64 elapsed: {}", duration_cast<milliseconds>(sw.elapsed()));
+        SPDLOG_TRACE("source人脸特征提取 base64 elapsed: {}", duration_cast<milliseconds>(sw.elapsed()));
 
         if (source.is_err()) {
             auto errorCode = source.err_value();
