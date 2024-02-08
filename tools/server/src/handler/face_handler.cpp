@@ -260,7 +260,7 @@ int Face::Search(const HttpContextPtr &ctx) {
             const float *targetFeature = info.feature.get();
             for (std::size_t idx = 0; idx < info.count; idx++) {
                 const float *target = targetFeature + (idx * FACE_FEATURE_LENGHT);
-                float similarity = SimilarityCalculator<algorithm::SeetaDefault>::calculate(sourceFeature.data(), target, FACE_FEATURE_LENGHT);
+                float similarity = SimilarityCalculator<algorithm::SeetaDefault>::calculate(sourceFeature.data(), target, FACE_FEATURE_LENGHT, true);
                 if (topKList.size() < params.maxUser) {
                     topKList.emplace(info.index, idx, similarity);
                 } else if (topKList.top().similarity < similarity) {

@@ -18,7 +18,7 @@ struct SeetaDefault {};
 
 template <typename AlgorithmTag>
 struct SimilarityCalculator {
-    static float calculate(const float *lhs, const float *rhs, std::size_t size);
+    static float calculate(const float *lhs, const float *rhs, std::size_t size, bool swapByteOrder = false);
 };
 
 template struct SimilarityCalculator<algorithm::SeetaDefault>;
