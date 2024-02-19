@@ -169,7 +169,7 @@ face::common::Result<FeatureEngine::Result, FeatureEngine::ErrorCode> FeatureEng
     }
 }
 
-face::common::Result<FeatureEngine::Result, FeatureEngine::ErrorCode> FeatureEngine::ExtractFeatureFromData(const common::AutoBuffer buffer) const {
+face::common::Result<FeatureEngine::Result, FeatureEngine::ErrorCode> FeatureEngine::ExtractFeatureFromData(const common::AutoBuffer &buffer) const {
     try {
         spdlog::stopwatch sw;
         std::vector<uchar> data(buffer.data(), buffer.data() + buffer.size());
@@ -210,9 +210,5 @@ face::common::Result<FeatureEngine::Result, FeatureEngine::ErrorCode> FeatureEng
     }
 }
 
-float FeatureEngine::CalculateSimilarity(const float *featers1, const float *featers2) const {
-    float sim = impl->FR->CalculateSimilarity(featers1, featers2);
-    return sim;
-}
 }  // namespace recognizer
 }  // namespace face

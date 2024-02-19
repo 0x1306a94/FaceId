@@ -44,9 +44,8 @@ class FeatureEngine {
 
     face::common::Result<FeatureEngine::Result, FeatureEngine::ErrorCode> ExtractFeatureFromBase64(const std::string &base64_str) const;
     face::common::Result<FeatureEngine::Result, FeatureEngine::ErrorCode> ExtractFeatureFromData(const std::string &source) const;
-    face::common::Result<FeatureEngine::Result, FeatureEngine::ErrorCode> ExtractFeatureFromData(const face::common::AutoBuffer buffer) const;
+    face::common::Result<FeatureEngine::Result, FeatureEngine::ErrorCode> ExtractFeatureFromData(const face::common::AutoBuffer &buffer) const;
     face::common::Result<FeatureEngine::Result, FeatureEngine::ErrorCode> ExtractFeature(const std::string &image_path) const;
-    float CalculateSimilarity(const float *featers1, const float *featers2) const;
 };
 }  // namespace recognizer
 };  // namespace face

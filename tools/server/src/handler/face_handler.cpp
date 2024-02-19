@@ -12,7 +12,9 @@
 #include "result.hpp"
 
 #include "../src/SimilarityCalculator.hpp"
+#include "../src/image_downloader.hpp"
 
+#include "../common/src/AutoBuffer.hpp"
 #include "../common/src/base64.hpp"
 #include "../common/src/byte_order.hpp"
 
@@ -72,7 +74,30 @@ int Face::Add(const HttpContextPtr &ctx) {
     auto storage = server::Context::Current()->GetStorage();
 
     std::vector<float> faceFeature;
-    do {
+    if (params.image.find("http://") == 0 || params.image.find("https://") == 0) {
+        // image url
+        common::AutoBuffer buffer;
+        spdlog::stopwatch sw;
+        auto size = download::image_from_url(params.image, buffer);
+        SPDLOG_TRACE("加载网络图片: appId: {} url: {} elapsed: {}", params.appId, params.image, duration_cast<milliseconds>(sw.elapsed()));
+        if (size == 0) {
+            return SendFail(ctx, 400, "URL无法加载");
+        }
+        sw.reset();
+
+        auto enginePool = server::Context::Current()->GetEnginePool();
+        face::recognizer::FeatureEnginePool::LockGuard fr(enginePool);
+        auto source = fr->ExtractFeatureFromData(buffer);
+        SPDLOG_TRACE("source人脸特征提取 elapsed: {}", duration_cast<milliseconds>(sw.elapsed()));
+
+        if (source.is_err()) {
+            auto errorCode = source.err_value();
+            return SendFail(ctx, errorCode, "source fail");
+        }
+
+        faceFeature = source.ok_value().feature;
+
+    } else {
         auto enginePool = server::Context::Current()->GetEnginePool();
 
         face::recognizer::FeatureEnginePool::LockGuard fr(enginePool);
@@ -85,7 +110,7 @@ int Face::Add(const HttpContextPtr &ctx) {
             return SendFail(ctx, errorCode, "");
         }
         faceFeature = result.ok_value().feature;
-    } while (0);
+    }
 
     auto addResult = storage->AddFaceRecord(params.appId, params.userId, params.userInfo, faceFeature);
     face::server::reqparmas::FaceAddResponse response;
@@ -181,11 +206,42 @@ int Face::Match(const HttpContextPtr &ctx) {
     std::vector<float> sourceFeature;
     std::vector<float> targetFeature;
 
-    do {
-        auto enginePool = server::Context::Current()->GetEnginePool();
-        face::recognizer::FeatureEnginePool::LockGuard fr(enginePool);
+    common::AutoBuffer sourceBuffer;
+    common::AutoBuffer targetBuffer;
 
+    if (params.source.find("http://") == 0 || params.source.find("https://") == 0) {
         spdlog::stopwatch sw;
+        auto size = download::image_from_url(params.source, sourceBuffer);
+        SPDLOG_TRACE("加载网络图片: url: {} elapsed: {}", params.source, duration_cast<milliseconds>(sw.elapsed()));
+        if (size == 0) {
+            return SendFail(ctx, 400, "URL无法加载");
+        }
+    }
+
+    if (params.target.find("http://") == 0 || params.target.find("https://") == 0) {
+        spdlog::stopwatch sw;
+        auto size = download::image_from_url(params.target, targetBuffer);
+        SPDLOG_TRACE("加载网络图片: url: {} elapsed: {}", params.target, duration_cast<milliseconds>(sw.elapsed()));
+        if (size == 0) {
+            return SendFail(ctx, 400, "URL无法加载");
+        }
+    }
+
+    auto enginePool = server::Context::Current()->GetEnginePool();
+    face::recognizer::FeatureEnginePool::LockGuard fr(enginePool);
+    
+    spdlog::stopwatch sw;
+    if (sourceBuffer.size() > 0) {
+        auto source = fr->ExtractFeatureFromData(sourceBuffer);
+        SPDLOG_INFO("source人脸特征提取 elapsed: {}", duration_cast<milliseconds>(sw.elapsed()));
+
+        if (source.is_err()) {
+            auto errorCode = source.err_value();
+            return SendFail(ctx, errorCode, "source fail");
+        }
+        sourceFeature = source.ok_value().feature;
+    } else {
+
         auto source = fr->ExtractFeatureFromBase64(params.source);
         SPDLOG_INFO("source人脸特征提取 base64 elapsed: {}", duration_cast<milliseconds>(sw.elapsed()));
 
@@ -193,17 +249,32 @@ int Face::Match(const HttpContextPtr &ctx) {
             auto errorCode = source.err_value();
             return SendFail(ctx, errorCode, "source fail");
         }
-        sw.reset();
+
+        sourceFeature = source.ok_value().feature;
+    }
+
+    sw.reset();
+    if (targetBuffer.size() > 0) {
+        auto target = fr->ExtractFeatureFromData(targetBuffer);
+        SPDLOG_INFO("source人脸特征提取 elapsed: {}", duration_cast<milliseconds>(sw.elapsed()));
+
+        if (target.is_err()) {
+            auto errorCode = target.err_value();
+            return SendFail(ctx, errorCode, "target fail");
+        }
+        targetFeature = target.ok_value().feature;
+    } else {
+
         auto target = fr->ExtractFeatureFromBase64(params.target);
-        SPDLOG_INFO("source人脸特征提取 base64 elapsed: {}", duration_cast<milliseconds>(sw.elapsed()));
+        SPDLOG_INFO("target人脸特征提取 base64 elapsed: {}", duration_cast<milliseconds>(sw.elapsed()));
+
         if (target.is_err()) {
             auto errorCode = target.err_value();
             return SendFail(ctx, errorCode, "target fail");
         }
 
-        sourceFeature = source.ok_value().feature;
         targetFeature = target.ok_value().feature;
-    } while (0);
+    }
 
     float similarity = SimilarityCalculator<algorithm::SeetaDefault>::calculate(sourceFeature.data(), targetFeature.data(), sourceFeature.size());
     face::server::reqparmas::FaceMatchResponse response;
@@ -236,7 +307,31 @@ int Face::Search(const HttpContextPtr &ctx) {
     }
 
     std::vector<float> sourceFeature;
-    do {
+    if (params.source.find("http://") == 0 || params.source.find("https://") == 0) {
+        // image url
+        common::AutoBuffer buffer;
+        spdlog::stopwatch sw;
+        auto size = download::image_from_url(params.source, buffer);
+        SPDLOG_TRACE("加载网络图片: appId: {} url: {} elapsed: {}", params.appId, params.source, duration_cast<milliseconds>(sw.elapsed()));
+        if (size == 0) {
+            return SendFail(ctx, 400, "URL无法加载");
+        }
+        sw.reset();
+
+        auto enginePool = server::Context::Current()->GetEnginePool();
+        face::recognizer::FeatureEnginePool::LockGuard fr(enginePool);
+        auto source = fr->ExtractFeatureFromData(buffer);
+        SPDLOG_TRACE("source人脸特征提取 elapsed: {}", duration_cast<milliseconds>(sw.elapsed()));
+
+        if (source.is_err()) {
+            auto errorCode = source.err_value();
+            return SendFail(ctx, errorCode, "source fail");
+        }
+
+        sourceFeature = source.ok_value().feature;
+
+    } else {
+        // base64
         auto enginePool = server::Context::Current()->GetEnginePool();
         face::recognizer::FeatureEnginePool::LockGuard fr(enginePool);
 
@@ -250,7 +345,7 @@ int Face::Search(const HttpContextPtr &ctx) {
         }
 
         sourceFeature = source.ok_value().feature;
-    } while (0);
+    }
 
     auto features = storage->GetFaceFeatures(params.appId);
     auto result = nlohmann::json::array();
@@ -273,9 +368,13 @@ int Face::Search(const HttpContextPtr &ctx) {
 
     while (!topKList.empty()) {
         const auto &value = topKList.top();
+        float score = std::fmax(0.f, std::fmin(100.f, value.similarity * 100.0));
+        if (score < params.threshold) {
+            topKList.pop();
+            continue;
+        }
         auto user = storage->GetUser(params.appId, value.index, value.offset);
         if (user) {
-            float score = std::fmax(0.f, std::fmin(100.f, value.similarity * 100.0));
             auto _user = user.value();
             result.emplace_back(nlohmann::json{
                 {"userId", _user.userId},
